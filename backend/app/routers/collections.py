@@ -197,8 +197,11 @@ async def add_paper_to_collection(
             CollectionPaper.paper_id == data.paper_id,
         )
     )
-    if existing.scalar_one_or_none():
-        return {"message": "Paper already in collection"}
+    if existing.scalars().first():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Paper already in collection",
+        )
 
     cp = CollectionPaper(collection_id=collection_id, paper_id=data.paper_id)
     db.add(cp)
@@ -220,8 +223,8 @@ async def remove_paper_from_collection(
             CollectionPaper.paper_id == paper_id,
         )
     )
-    cp = result.scalar_one_or_none()
-    if cp:
+    cps = result.scalars().all()
+    for cp in cps:
         await db.delete(cp)
 
 
@@ -240,9 +243,10 @@ async def update_paper_notes(
             CollectionPaper.paper_id == paper_id,
         )
     )
-    cp = result.scalar_one_or_none()
-    if not cp:
+    cps = result.scalars().all()
+    if not cps:
         raise HTTPException(status_code=404, detail="Paper not in collection")
-    cp.notes = notes
+    for cp in cps:
+        cp.notes = notes
     await db.flush()
     return {"message": "Notes updated"}

@@ -67,65 +67,63 @@ async function handleRegister() {
 
 <template>
   <div class="flex min-h-screen items-center justify-center bg-[var(--color-bg)]">
-    <div class="w-full max-w-[400px]">
+    <div class="w-full max-w-[400px] px-4">
       <!-- Logo -->
-      <div class="mb-7 flex items-center justify-center gap-2.5">
-        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--color-primary)]">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" opacity="0.9"/></svg>
-        </div>
-        <div class="text-[18px] font-extrabold text-[var(--color-text)]">ResearchFinder</div>
+      <div class="mb-6 flex items-center justify-center gap-2.5">
+        <img src="@/assets/logo.png" class="h-12 w-12 object-contain rounded-md" alt="ResearchFinder Logo" />
+        <div class="text-lg font-bold text-[var(--color-text)]">ResearchFinder</div>
       </div>
 
       <!-- Card -->
-      <div class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-7 shadow-sm">
-        <h2 class="text-center text-lg font-bold text-[var(--color-text)]">Buat Akun Baru</h2>
-        <p class="mb-6 mt-1.5 text-center text-[13px] text-[var(--color-text-sub)]">Mulai perjalanan riset kamu di sini</p>
+      <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+        <h2 class="text-center text-base font-semibold text-[var(--color-text)]">Buat Akun Baru</h2>
+        <p class="mb-5 mt-1 text-center text-sm text-[var(--color-text-sub)]">Mulai perjalanan riset kamu di sini</p>
 
         <!-- Error banner -->
-        <div v-if="error" class="mb-4 rounded-lg bg-red-50 border border-red-200 px-3.5 py-2.5">
+        <div v-if="error" class="mb-4 rounded-md bg-red-50 border border-red-200 px-3 py-2">
           <div class="flex items-start gap-2">
-            <span class="text-red-500 mt-0.5">⚠️</span>
-            <div class="text-[13px] text-red-700 leading-relaxed">{{ error }}</div>
+            <svg width="16" height="16" class="mt-0.5 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+            <div class="text-sm text-red-700 leading-relaxed">{{ error }}</div>
           </div>
         </div>
 
         <form @submit.prevent="handleRegister">
-          <div class="mb-3.5">
-            <label class="mb-1.5 block text-[13px] font-medium text-[var(--color-text)]">Nama Lengkap</label>
-            <input v-model="name" type="text" required placeholder="Ival Permana"
-              class="w-full rounded-xl border px-3.5 py-2.5 text-[13.5px] outline-none transition focus:border-[var(--color-primary)]"
+          <div class="mb-3">
+            <label class="mb-1 block text-sm font-medium text-[var(--color-text)]">Nama Lengkap</label>
+            <input v-model="name" type="text" required placeholder="Your full name"
+              class="w-full rounded-md border px-3 py-2 text-sm outline-none transition focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
               :class="fieldErrors.name ? 'border-red-400 bg-red-50' : 'border-[var(--color-border)] bg-[var(--color-bg)]'" />
-            <p v-if="fieldErrors.name" class="mt-1 text-[11.5px] text-red-500">{{ fieldErrors.name }}</p>
+            <p v-if="fieldErrors.name" class="mt-0.5 text-xs text-red-500">{{ fieldErrors.name }}</p>
           </div>
-          <div class="mb-3.5">
-            <label class="mb-1.5 block text-[13px] font-medium text-[var(--color-text)]">Email</label>
-            <input v-model="email" type="email" required placeholder="nama@universitas.ac.id"
-              class="w-full rounded-xl border px-3.5 py-2.5 text-[13.5px] outline-none transition focus:border-[var(--color-primary)]"
+          <div class="mb-3">
+            <label class="mb-1 block text-sm font-medium text-[var(--color-text)]">Email</label>
+            <input v-model="email" type="email" required placeholder="you@example.com"
+              class="w-full rounded-md border px-3 py-2 text-sm outline-none transition focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
               :class="fieldErrors.email ? 'border-red-400 bg-red-50' : 'border-[var(--color-border)] bg-[var(--color-bg)]'" />
-            <p v-if="fieldErrors.email" class="mt-1 text-[11.5px] text-red-500">{{ fieldErrors.email }}</p>
+            <p v-if="fieldErrors.email" class="mt-0.5 text-xs text-red-500">{{ fieldErrors.email }}</p>
           </div>
-          <div class="mb-3.5">
-            <label class="mb-1.5 block text-[13px] font-medium text-[var(--color-text)]">Password</label>
-            <input v-model="password" type="password" required placeholder="Minimal 8 karakter"
-              class="w-full rounded-xl border px-3.5 py-2.5 text-[13.5px] outline-none transition focus:border-[var(--color-primary)]"
+          <div class="mb-3">
+            <label class="mb-1 block text-sm font-medium text-[var(--color-text)]">Password</label>
+            <input v-model="password" type="password" required placeholder="Minimum 8 characters"
+              class="w-full rounded-md border px-3 py-2 text-sm outline-none transition focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20"
               :class="fieldErrors.password ? 'border-red-400 bg-red-50' : 'border-[var(--color-border)] bg-[var(--color-bg)]'" />
-            <p v-if="fieldErrors.password" class="mt-1 text-[11.5px] text-red-500">{{ fieldErrors.password }}</p>
+            <p v-if="fieldErrors.password" class="mt-0.5 text-xs text-red-500">{{ fieldErrors.password }}</p>
           </div>
           <div class="mb-5">
-            <label class="mb-1.5 block text-[13px] font-medium text-[var(--color-text)]">
+            <label class="mb-1 block text-sm font-medium text-[var(--color-text)]">
               Institusi / Universitas <span class="text-[var(--color-text-muted)]">(opsional)</span>
             </label>
-            <input v-model="institution" type="text" placeholder="Universitas Indonesia"
-              class="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3.5 py-2.5 text-[13.5px] outline-none transition focus:border-[var(--color-primary)]" />
+            <input v-model="institution" type="text" placeholder="Your university or institution"
+              class="w-full rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2 text-sm outline-none transition focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]/20" />
           </div>
-          <button type="submit" :disabled="loading" class="w-full rounded-xl bg-[var(--color-primary)] py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--color-primary-hover)] disabled:opacity-50">
+          <button type="submit" :disabled="loading" class="w-full rounded-md bg-[var(--color-primary)] py-2 text-sm font-medium text-white transition hover:bg-[var(--color-primary-hover)] disabled:opacity-50">
             {{ loading ? 'Mendaftarkan...' : 'Daftar Sekarang' }}
           </button>
         </form>
       </div>
 
-      <p class="mt-5 text-center text-[13px] text-[var(--color-text-sub)]">
-        Sudah punya akun? <router-link to="/login" class="font-semibold text-[var(--color-primary)]">Masuk di sini</router-link>
+      <p class="mt-4 text-center text-sm text-[var(--color-text-sub)]">
+        Sudah punya akun? <router-link to="/login" class="font-medium text-[var(--color-primary)]">Masuk di sini</router-link>
       </p>
     </div>
   </div>

@@ -12,9 +12,10 @@ from app.core.security import (
     get_current_user,
 )
 from app.models.user import User
-from app.schemas.user import UserCreate, UserLogin, UserResponse, TokenResponse
+from app.schemas.user import UserCreate, UserLogin, UserResponse, TokenResponse, UserUpdate
 
 router = APIRouter()
+
 
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
@@ -59,7 +60,7 @@ async def get_me(current_user: User = Depends(get_current_user)):
 
 @router.put("/profile", response_model=UserResponse)
 async def update_profile(
-    data: UserCreate,
+    data: UserUpdate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -70,6 +71,8 @@ async def update_profile(
         current_user.institution = data.institution
     if data.research_interests is not None:
         current_user.research_interests = data.research_interests
+    if data.password is not None and data.password.strip() != "":
+        current_user.password = hash_password(data.password)
     await db.flush()
     await db.refresh(current_user)
     return UserResponse.model_validate(current_user)

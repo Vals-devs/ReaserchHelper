@@ -44,7 +44,9 @@
 - Filter: sumber (semua/S2/arXiv), bidang studi
 - Auto-cache paper ke database
 - Auto-save ke search history
-- Rate limiting Semantic Scholar (1 req/detik)
+- Rate limiting Semantic Scholar (1 req/detik didukung `asyncio.Lock` untuk mencegah concurrency race condition)
+- Caching pencarian (In-Memory TTL Cache) untuk meminimalkan beban request ke Semantic Scholar
+- Auto-retry 429 rate limit error dengan toleransi jeda waktu
 - Error handling untuk kedua API
 - **Files:** `routers/papers.py`, `services/semantic_scholar.py`, `services/arxiv.py`, `views/Search.vue`, `stores/papers.ts`
 
@@ -73,6 +75,7 @@
 - AI extract metadata otomatis (judul, authors, tahun, abstrak)
 - Simpan PDF ke `backend/uploads/`
 - List dan delete uploaded papers
+- Proteksi duplikasi upload berdasarkan pencocokan judul paper secara case-insensitive
 - 40+ PDF sudah ter-upload di database
 - **Files:** `routers/upload.py`, `services/pdf_parser.py`, `stores/upload.ts`
 
@@ -250,12 +253,12 @@ Health:
 
 ## 10. Known Issues / Limitations
 
-1. **Model Groq** — `gemma2-9b-it` sudah decommissioned, diganti ke `llama-3.3-70b-versatile`
-2. **Rate limit Groq** — Free tier, bisa kena 429 kalau terlalu banyak request berurutan
+1. **Model Groq** — `gemma2-9b-it` sudah decommissioned, diganti ke `llama-3.3-70b-versatile` (Sudah teratasi)
+2. **Rate limit Groq** — Free tier, bisa kena 429 jika terlalu banyak request berurutan (Sudah dimitigasi dengan auto-retry + exponential backoff)
 3. **SQLite concurrency** — Tidak cocok untuk production (gunakan PostgreSQL via Docker)
 4. **Redis** — Disabled di dev, cache belum aktif
 5. **PDF text extraction** — Tidak bisa extract dari PDF scan/image (hanya text-based PDF)
-6. **Upload duplicates** — Bisa upload PDF yang sama berkali-kali (belum ada dedup check)
+6. **Upload duplicates** — Bisa upload PDF yang sama berkali-kali (Sudah teratasi dengan validasi judul paper case-insensitive saat upload)
 
 ---
 

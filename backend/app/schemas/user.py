@@ -13,6 +13,13 @@ class UserCreate(BaseModel):
     research_interests: str | None = None
 
 
+class UserUpdate(BaseModel):
+    name: str | None = None
+    institution: str | None = None
+    research_interests: str | None = None
+    password: str | None = None
+
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str

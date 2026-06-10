@@ -68,7 +68,8 @@ async def chat_completion(
     temperature: float = 0.3,
     max_tokens: int = 2048,
 ) -> str:
-    """Send a chat completion request to Groq API."""
+    """Send a chat completion request to Groq API with automatic retries for rate limits."""
+    import asyncio
     if not settings.GROQ_API_KEY:
         return "[Groq API key not configured]"
 
@@ -79,24 +80,41 @@ async def chat_completion(
         "max_tokens": max_tokens,
     }
 
-    async with httpx.AsyncClient(timeout=60) as client:
+    max_retries = 2
+    for attempt in range(max_retries + 1):
         try:
-            resp = await client.post(
-                BASE_URL,
-                json=payload,
-                headers={
-                    "Authorization": f"Bearer {settings.GROQ_API_KEY}",
-                    "Content-Type": "application/json",
-                },
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            return data["choices"][0]["message"]["content"]
+            async with httpx.AsyncClient(timeout=60) as client:
+                resp = await client.post(
+                    BASE_URL,
+                    json=payload,
+                    headers={
+                        "Authorization": f"Bearer {settings.GROQ_API_KEY}",
+                        "Content-Type": "application/json",
+                    },
+                )
+                if resp.status_code == 429 and attempt < max_retries:
+                    wait_time = (attempt + 1) * 3.0
+                    logger.warning(f"Groq API returned 429. Retrying in {wait_time} seconds (attempt {attempt + 1}/{max_retries})...")
+                    await asyncio.sleep(wait_time)
+                    continue
+                resp.raise_for_status()
+                data = resp.json()
+                return data["choices"][0]["message"]["content"]
         except httpx.HTTPStatusError as e:
+            if e.response.status_code == 429 and attempt < max_retries:
+                wait_time = (attempt + 1) * 3.0
+                logger.warning(f"Groq API HTTPStatusError 429. Retrying in {wait_time} seconds (attempt {attempt + 1}/{max_retries})...")
+                await asyncio.sleep(wait_time)
+                continue
             error_body = e.response.text[:300] if e.response else "unknown"
             logger.error(f"Groq API error ({e.response.status_code}): {error_body}")
             return f"[Groq API error: {e.response.status_code}]"
         except Exception as e:
+            if attempt < max_retries:
+                wait_time = (attempt + 1) * 3.0
+                logger.warning(f"Groq request failed: {e}. Retrying in {wait_time} seconds (attempt {attempt + 1}/{max_retries})...")
+                await asyncio.sleep(wait_time)
+                continue
             logger.error(f"Groq request failed: {e}")
             return f"[Groq request failed: {e}]"
 

@@ -67,6 +67,30 @@ async def upload_pdf(
         title_hint=pdf_data["title_hint"],
     )
 
+    # Check for duplicate uploaded paper by title (case-insensitive)
+    normalized_title = metadata["title"].strip().lower()
+    existing_check = await db.execute(
+        select(Paper).where(Paper.source == "uploaded")
+    )
+    all_uploaded = existing_check.scalars().all()
+    duplicate = None
+    for p in all_uploaded:
+        if p.title.strip().lower() == normalized_title:
+            duplicate = p
+            break
+
+    if duplicate:
+        # Delete the saved PDF file to avoid leaving orphan files on disk
+        if file_path.exists():
+            try:
+                os.remove(file_path)
+            except Exception:
+                pass
+        raise HTTPException(
+            status_code=400,
+            detail=f"Paper dengan judul ini sudah di-upload sebelumnya: '{duplicate.title}'",
+        )
+
     # Create Paper record
     paper = Paper(
         external_id=f"upload_{file_id}",
