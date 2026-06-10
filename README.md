@@ -102,7 +102,7 @@ Semua pencarian tersimpan otomatis. Klik "Cari Lagi" untuk mengulang pencarian s
 ### 1. Clone Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/Vals-devs/ReaserchHelper.git
 cd ReaserchHelper
 ```
 
@@ -352,4 +352,4 @@ Project ini dibuat untuk keperluan akademik dan portofolio.
 
 ---
 
-**Dibuat dengan ❤️ untuk mahasiswa Indonesia**
+**Dibuat dengan cinta dan ai untuk mahasiswa Indonesia**
