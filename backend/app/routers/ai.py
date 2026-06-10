@@ -20,6 +20,11 @@ class SummarizeRequest(BaseModel):
     paper_id: str
 
 
+class TranslateRequest(BaseModel):
+    text: str
+    target_language: str = "id"  # "id" or "en"
+
+
 class ExplainRequest(BaseModel):
     text: str
     language: str = "id"  # "id" or "en"
@@ -47,6 +52,16 @@ async def summarize_paper(
 
     summary = await groq_service.summarize_paper(paper.title, paper.abstract or "")
     return {"paper_id": data.paper_id, "summary": summary}
+
+
+@router.post("/translate")
+async def translate_abstract(
+    data: TranslateRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Translate text to target language."""
+    translation = await groq_service.translate_text(data.text, data.target_language)
+    return {"translation": translation}
 
 
 @router.post("/explain")
@@ -104,4 +119,13 @@ async def suggest_related(
         raise HTTPException(status_code=404, detail="Paper not found")
 
     keywords = await groq_service.extract_keywords(paper.abstract or "")
-    return {"paper_id": data.paper_id, "keywords": keywords, "suggestions": []}
+
+    # Search Semantic Scholar with extracted keywords
+    from app.services import semantic_scholar as s2_service
+    suggestions = []
+    if keywords:
+        query = " ".join(keywords[:3]) if isinstance(keywords, list) else str(keywords)
+        search_result = await s2_service.search_papers(query=query, limit=10)
+        suggestions = search_result.get("results", [])
+
+    return {"paper_id": data.paper_id, "keywords": keywords, "suggestions": suggestions}

@@ -7,6 +7,7 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const menuItems = [
+  { id: 'dashboard', label: 'Dashboard', path: '/dashboard', icon: '🏠' },
   { id: 'search', label: 'Search Papers', path: '/search', icon: '🔍' },
   { id: 'collections', label: 'Collections', path: '/collections', icon: '📚' },
   { id: 'history', label: 'Search History', path: '/history', icon: '🕐' },
@@ -26,7 +27,7 @@ function handleLogout() {
 <template>
   <aside class="fixed left-0 top-0 z-20 flex h-screen w-[252px] flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] py-5">
     <!-- Brand -->
-    <div class="flex items-center gap-3 px-5 pb-6">
+    <router-link to="/dashboard" class="flex items-center gap-3 px-5 pb-6">
       <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-blue-400 shadow-sm">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
           <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" opacity="0.9" />
@@ -37,7 +38,7 @@ function handleLogout() {
         <div class="text-[15px] font-extrabold tracking-tight text-[var(--color-text)]">ResearchFinder</div>
         <div class="text-[10.5px] font-medium text-[var(--color-text-muted)]">AI-Powered Research Tool</div>
       </div>
-    </div>
+    </router-link>
 
     <!-- New Search CTA -->
     <div class="px-3 mb-2">

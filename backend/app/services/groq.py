@@ -20,18 +20,46 @@ MAX_TOTAL_CHARS = 12000
 
 
 def _parse_json_response(text: str) -> dict | list | str:
-    """Try to parse JSON from AI response, handling markdown code blocks."""
-    # Strip markdown code fences
+    """Try to parse JSON from AI response, handling markdown code blocks and extra text."""
+    if not text or not text.strip():
+        return text
+
     cleaned = text.strip()
-    if cleaned.startswith("```"):
-        lines = cleaned.split("\n")
-        # Remove first and last line (``` markers)
-        lines = [l for l in lines[1:] if not l.strip().startswith("```")]
-        cleaned = "\n".join(lines).strip()
+
+    # 1. Try direct parse first
     try:
         return json.loads(cleaned)
     except (json.JSONDecodeError, ValueError):
-        return text
+        pass
+
+    # 2. Strip markdown code fences (```json ... ``` or ``` ... ```)
+    import re
+    fence_match = re.search(r'```(?:json)?\s*\n?(.*?)\n?\s*```', cleaned, re.DOTALL)
+    if fence_match:
+        try:
+            return json.loads(fence_match.group(1).strip())
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # 3. Find first { and last } to extract JSON object
+    first_brace = cleaned.find('{')
+    last_brace = cleaned.rfind('}')
+    if first_brace != -1 and last_brace > first_brace:
+        try:
+            return json.loads(cleaned[first_brace:last_brace + 1])
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # 4. Find first [ and last ] to extract JSON array
+    first_bracket = cleaned.find('[')
+    last_bracket = cleaned.rfind(']')
+    if first_bracket != -1 and last_bracket > first_bracket:
+        try:
+            return json.loads(cleaned[first_bracket:last_bracket + 1])
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    return text
 
 
 async def chat_completion(
@@ -75,24 +103,33 @@ async def chat_completion(
 
 async def summarize_paper(title: str, abstract: str) -> dict:
     """Generate a paper summary in Bahasa Indonesia."""
-    prompt = f"""Ringkas paper ilmiah berikut dalam bahasa Indonesia.
-Berikan output dalam format JSON dengan kunci:
-- "ringkasan": ringkasan 3-5 kalimat
-- "temuan_utama": array 3-5 poin temuan utama
-- "metodologi": deskripsi singkat metodologi yang digunakan
+    system_prompt = """Kamu adalah asisten peneliti yang meringkas paper ilmiah dalam bahasa Indonesia.
+Selalu berikan output HANYA dalam format JSON valid (tanpa markdown, tanpa teks tambahan) dengan struktur:
+{"ringkasan": "ringkasan 3-5 kalimat", "temuan_utama": ["poin 1", "poin 2", "poin 3"], "metodologi": "deskripsi singkat metodologi"}"""
+
+    user_prompt = f"""Ringkas paper berikut:
 
 Judul: {title}
 Abstrak: {abstract}
 
-Output JSON:"""
+Berikan HANYA JSON:"""
 
     result = await chat_completion(
-        [{"role": "user", "content": prompt}],
+        [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
         model=MODEL_DEFAULT,
+        temperature=0.2,
     )
     parsed = _parse_json_response(result)
     if isinstance(parsed, dict):
-        return parsed
+        return {
+            "ringkasan": parsed.get("ringkasan", ""),
+            "temuan_utama": parsed.get("temuan_utama", []),
+            "metodologi": parsed.get("metodologi", ""),
+        }
+    # Fallback: return raw text as ringkasan
     return {"ringkasan": result, "temuan_utama": [], "metodologi": ""}
 
 
@@ -108,6 +145,32 @@ Penjelasan:"""
     return await chat_completion(
         [{"role": "user", "content": prompt}],
         model=MODEL_DEFAULT,
+    )
+
+
+async def translate_text(text: str, target_language: str = "id") -> str:
+    """Translate text to target language (default: Indonesian)."""
+    if target_language == "id":
+        lang_name = "bahasa Indonesia yang formal dan akademis"
+    else:
+        lang_name = "English (academic and formal)"
+
+    prompt = f"""Terjemahkan teks akademis berikut ke {lang_name}. 
+Pertahankan istilah teknis dalam tanda kurung jika perlu.
+Berikan HANYA terjemahan tanpa penjelasan tambahan.
+
+Teks asli:
+{text}
+
+Terjemahan:"""
+
+    return await chat_completion(
+        [
+            {"role": "system", "content": "Kamu adalah penerjemah akademis profesional. Berikan hanya terjemahan tanpa komentar tambahan."},
+            {"role": "user", "content": prompt},
+        ],
+        model=MODEL_DEFAULT,
+        temperature=0.2,
     )
 
 

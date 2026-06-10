@@ -12,7 +12,7 @@ export const useAIStore = defineStore('ai', () => {
     loading.value = true
     try {
       const { data } = await api.post('/ai/summarize', { paper_id: paperId })
-      summary.value = data
+      summary.value = data.summary || data
     } finally {
       loading.value = false
     }

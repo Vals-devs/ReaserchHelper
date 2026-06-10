@@ -1,9 +1,13 @@
 """arXiv API wrapper."""
 
+import logging
+
 import httpx
 import xml.etree.ElementTree as ET
 
-BASE_URL = "http://export.arxiv.org/api/query"
+logger = logging.getLogger(__name__)
+
+BASE_URL = "https://export.arxiv.org/api/query"
 
 ATOM_NS = "{http://www.w3.org/2005/Atom}"
 ARXIV_NS = "{http://arxiv.org/schemas/atom}"
@@ -41,10 +45,14 @@ async def search_papers(query: str, max_results: int = 20, start: int = 0) -> li
         "max_results": max_results,
         "sortBy": "relevance",
     }
-    async with httpx.AsyncClient(timeout=15) as client:
-        resp = await client.get(BASE_URL, params=params)
-        resp.raise_for_status()
+    try:
+        async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
+            resp = await client.get(BASE_URL, params=params)
+            resp.raise_for_status()
 
-    root = ET.fromstring(resp.text)
-    entries = root.findall(f"{ATOM_NS}entry")
-    return [parse_entry(e) for e in entries]
+        root = ET.fromstring(resp.text)
+        entries = root.findall(f"{ATOM_NS}entry")
+        return [parse_entry(e) for e in entries]
+    except Exception as e:
+        logger.error(f"arXiv search failed: {e}")
+        return []

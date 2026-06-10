@@ -5,6 +5,12 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
+      path: '/',
+      name: 'landing',
+      component: () => import('@/views/Landing.vue'),
+      meta: { hideSidebar: true, guest: true },
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('@/views/auth/Login.vue'),
@@ -17,7 +23,7 @@ const router = createRouter({
       meta: { hideSidebar: true, guest: true },
     },
     {
-      path: '/',
+      path: '/dashboard',
       name: 'dashboard',
       component: () => import('@/views/Dashboard.vue'),
       meta: { requiresAuth: true },
@@ -59,15 +65,20 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
   ],
+  scrollBehavior() {
+    return { top: 0 }
+  },
 })
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
 
+  // Protected routes: redirect to landing if not authenticated
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
-    return { name: 'login' }
+    return { name: 'landing' }
   }
 
+  // Guest routes: redirect to dashboard if already logged in
   if (to.meta.guest && auth.isAuthenticated) {
     return { name: 'dashboard' }
   }

@@ -1,27 +1,152 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useUploadStore } from '@/stores/upload'
+import { useCollectionsStore, type CollectionPaper } from '@/stores/collections'
 import { useAIStore } from '@/stores/ai'
 
 const uploadStore = useUploadStore()
+const collectionsStore = useCollectionsStore()
 const aiStore = useAIStore()
 
-const activeTab = ref<'upload' | 'select' | 'result'>('upload')
+const activeTab = ref<'upload' | 'select' | 'result'>('select')
 const selectedIds = ref<Set<string>>(new Set())
 const dragOver = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 
-onMounted(() => uploadStore.fetchPapers())
+// Source filter: 'all' | 'uploaded' | collection_id
+const sourceFilter = ref('all')
+const collectionPapers = ref<CollectionPaper[]>([])
+const loadingCollection = ref(false)
+const selectedCollectionId = ref<string | null>(null)
 
-// Auto-switch to select tab after first upload
-watch(() => uploadStore.papers.length, (len) => {
-  if (len > 0 && activeTab.value === 'upload') {
-    // Stay on upload to allow more uploads
-  }
+onMounted(async () => {
+  await Promise.all([
+    uploadStore.fetchPapers(),
+    collectionsStore.fetchCollections(),
+  ])
 })
+
+// All available papers merged from uploads + collections
+const allPapers = computed(() => {
+  const papers: Array<{
+    id: string
+    title: string
+    authors: string[]
+    year: number | null
+    page_count: number | null
+    source: string
+    source_label: string
+  }> = []
+
+  // Add uploaded papers
+  if (sourceFilter.value === 'all' || sourceFilter.value === 'uploaded') {
+    for (const p of uploadStore.papers) {
+      papers.push({
+        id: p.id,
+        title: p.title,
+        authors: p.authors || [],
+        year: p.year,
+        page_count: p.page_count,
+        source: 'uploaded',
+        source_label: 'Uploaded',
+      })
+    }
+  }
+
+  // Add collection papers
+  if (sourceFilter.value === 'all') {
+    for (const p of collectionPapers.value) {
+      // Avoid duplicates (same paper in upload + collection)
+      if (!papers.find((existing) => existing.id === p.id)) {
+        papers.push({
+          id: p.id,
+          title: p.title,
+          authors: p.authors || [],
+          year: p.year,
+          page_count: p.page_count,
+          source: 'collection',
+          source_label: getCollectionName(selectedCollectionId.value || ''),
+        })
+      }
+    }
+  } else if (sourceFilter.value !== 'uploaded' && sourceFilter.value !== 'all') {
+    // Specific collection selected
+    for (const p of collectionPapers.value) {
+      if (!papers.find((existing) => existing.id === p.id)) {
+        papers.push({
+          id: p.id,
+          title: p.title,
+          authors: p.authors || [],
+          year: p.year,
+          page_count: p.page_count,
+          source: 'collection',
+          source_label: getCollectionName(sourceFilter.value),
+        })
+      }
+    }
+  }
+
+  return papers
+})
+
+function getCollectionName(id: string): string {
+  const col = collectionsStore.collections.find((c) => c.id === id)
+  return col?.name || 'Collection'
+}
+
+async function onSourceFilterChange(newFilter: string) {
+  sourceFilter.value = newFilter
+  collectionPapers.value = []
+  selectedCollectionId.value = null
+
+  if (newFilter !== 'all' && newFilter !== 'uploaded') {
+    await loadCollectionPapers(newFilter)
+  } else if (newFilter === 'all') {
+    // Load all collection papers
+    await loadAllCollectionPapers()
+  }
+}
+
+async function loadCollectionPapers(collectionId: string) {
+  loadingCollection.value = true
+  selectedCollectionId.value = collectionId
+  try {
+    const detail = await collectionsStore.fetchCollectionDetail(collectionId)
+    if (detail) {
+      collectionPapers.value = detail.papers
+    }
+  } catch {
+    collectionPapers.value = []
+  } finally {
+    loadingCollection.value = false
+  }
+}
+
+async function loadAllCollectionPapers() {
+  loadingCollection.value = true
+  try {
+    const all: CollectionPaper[] = []
+    for (const col of collectionsStore.collections) {
+      const detail = await collectionsStore.fetchCollectionDetail(col.id)
+      if (detail) {
+        for (const p of detail.papers) {
+          if (!all.find((existing) => existing.id === p.id)) {
+            all.push(p)
+          }
+        }
+      }
+    }
+    collectionPapers.value = all
+  } catch {
+    collectionPapers.value = []
+  } finally {
+    loadingCollection.value = false
+  }
+}
 
 const selectedCount = computed(() => selectedIds.value.size)
 const canAnalyze = computed(() => selectedCount.value >= 3 && selectedCount.value <= 10)
+const hasPapers = computed(() => uploadStore.papers.length > 0 || collectionsStore.collections.length > 0)
 
 function togglePaper(id: string) {
   const s = new Set(selectedIds.value)
@@ -34,6 +159,19 @@ function isSelected(id: string) {
   return selectedIds.value.has(id)
 }
 
+function selectAll() {
+  const s = new Set(selectedIds.value)
+  for (const p of allPapers.value) {
+    if (s.size >= 10) break
+    s.add(p.id)
+  }
+  selectedIds.value = s
+}
+
+function deselectAll() {
+  selectedIds.value = new Set()
+}
+
 async function handleFileUpload(file: File) {
   if (!file.name.toLowerCase().endsWith('.pdf')) {
     uploadStore.uploadError = 'Hanya file PDF yang diterima'
@@ -41,7 +179,6 @@ async function handleFileUpload(file: File) {
   }
   await uploadStore.uploadPaper(file)
   if (!uploadStore.uploadError) {
-    // Auto-select newly uploaded paper
     const latest = uploadStore.papers[0]
     if (latest) {
       const s = new Set(selectedIds.value)
@@ -92,6 +229,12 @@ const gapData = computed(() => {
     raw: g.raw_response || null,
   }
 })
+
+function formatAuthors(authors: string[]): string {
+  if (!authors?.length) return 'Unknown'
+  if (authors.length <= 3) return authors.join(', ')
+  return `${authors.slice(0, 3).join(', ')} et al.`
+}
 </script>
 
 <template>
@@ -99,7 +242,7 @@ const gapData = computed(() => {
     <div class="mb-6 flex items-center justify-between">
       <div>
         <h1 class="text-xl font-extrabold text-[var(--color-text)]">Research Gap Analysis</h1>
-        <p class="mt-1 text-[13px] text-[var(--color-text-sub)]">Upload paper PDF, pilih minimal 3, lalu analisis celah penelitiannya</p>
+        <p class="mt-1 text-[13px] text-[var(--color-text-sub)]">Pilih minimal 3 paper dari upload atau koleksi, lalu analisis celah penelitiannya</p>
       </div>
     </div>
 
@@ -108,23 +251,22 @@ const gapData = computed(() => {
       <button @click="activeTab = 'upload'"
         class="flex-1 rounded-lg py-2.5 text-[13px] font-semibold transition"
         :class="activeTab === 'upload' ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-sub)] hover:bg-gray-50'">
-        1. Upload Paper
+        Upload PDF
       </button>
-      <button @click="activeTab = 'select'" :disabled="uploadStore.papers.length === 0"
-        class="flex-1 rounded-lg py-2.5 text-[13px] font-semibold transition disabled:opacity-40"
+      <button @click="activeTab = 'select'"
+        class="flex-1 rounded-lg py-2.5 text-[13px] font-semibold transition"
         :class="activeTab === 'select' ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-sub)] hover:bg-gray-50'">
-        2. Pilih Paper ({{ selectedCount }}/10)
+        Pilih Paper ({{ selectedCount }}/10)
       </button>
       <button @click="activeTab = 'result'" :disabled="!aiStore.gapResult"
         class="flex-1 rounded-lg py-2.5 text-[13px] font-semibold transition disabled:opacity-40"
         :class="activeTab === 'result' ? 'bg-[var(--color-primary)] text-white' : 'text-[var(--color-text-sub)] hover:bg-gray-50'">
-        3. Hasil Analisis
+        Hasil Analisis
       </button>
     </div>
 
-    <!-- Tab 1: Upload -->
+    <!-- Tab: Upload -->
     <div v-if="activeTab === 'upload'">
-      <!-- Drop Zone -->
       <div
         @dragover.prevent="dragOver = true"
         @dragleave="dragOver = false"
@@ -137,83 +279,100 @@ const gapData = computed(() => {
         <h3 class="text-base font-bold text-[var(--color-text)]">
           {{ uploadStore.uploading ? 'Memproses PDF...' : 'Drag & drop PDF di sini' }}
         </h3>
-        <p class="mt-1.5 text-[13px] text-[var(--color-text-sub)]">
-          atau klik untuk memilih file (max 50 MB)
-        </p>
+        <p class="mt-1.5 text-[13px] text-[var(--color-text-sub)]">atau klik untuk memilih file (max 50 MB)</p>
         <div v-if="uploadStore.uploading" class="mt-4 flex justify-center">
           <div class="h-8 w-8 animate-spin rounded-full border-3 border-[var(--color-primary)] border-t-transparent"></div>
         </div>
       </div>
 
-      <!-- Upload Error -->
       <div v-if="uploadStore.uploadError" class="mt-3 rounded-lg bg-red-50 border border-red-200 px-3.5 py-2.5 text-[13px] text-red-700">
         {{ uploadStore.uploadError }}
       </div>
 
-      <!-- Recently Uploaded -->
       <div v-if="uploadStore.papers.length" class="mt-6">
-        <h3 class="mb-3 text-sm font-bold text-[var(--color-text)]">Paper yang sudah di-upload ({{ uploadStore.papers.length }})</h3>
+        <h3 class="mb-3 text-sm font-bold text-[var(--color-text)]">Uploaded Papers ({{ uploadStore.papers.length }})</h3>
         <div class="flex flex-col gap-2.5">
           <div v-for="paper in uploadStore.papers" :key="paper.id"
             class="flex items-center justify-between rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
             <div class="min-w-0 flex-1">
               <div class="text-[13.5px] font-semibold text-[var(--color-text)] truncate">{{ paper.title }}</div>
               <div class="text-[12px] text-[var(--color-text-sub)] mt-0.5">
-                {{ paper.authors?.join(', ') || 'Unknown authors' }}
+                {{ paper.authors?.join(', ') || 'Unknown' }}
                 <span v-if="paper.year"> · {{ paper.year }}</span>
-                <span v-if="paper.page_count"> · {{ paper.page_count }} halaman</span>
               </div>
             </div>
             <div class="flex items-center gap-2 ml-3 flex-shrink-0">
-              <span v-if="isSelected(paper.id)" class="text-[11px] font-semibold text-[var(--color-primary)] bg-[var(--color-primary-soft)] px-2 py-1 rounded-md">
-                Terpilih
-              </span>
+              <span v-if="isSelected(paper.id)" class="text-[11px] font-semibold text-[var(--color-primary)] bg-[var(--color-primary-soft)] px-2 py-1 rounded-md">Terpilih</span>
               <button @click="uploadStore.deletePaper(paper.id)"
-                class="rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-[11.5px] text-red-500 hover:bg-red-50 transition">
-                Hapus
-              </button>
+                class="rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-[11.5px] text-red-500 hover:bg-red-50 transition">Hapus</button>
             </div>
           </div>
         </div>
-        <button v-if="uploadStore.papers.length >= 3" @click="activeTab = 'select'"
-          class="mt-4 w-full rounded-xl bg-[var(--color-primary)] py-3 text-sm font-semibold text-white transition hover:bg-[var(--color-primary-hover)]">
-          Lanjut pilih paper untuk dianalisis →
+      </div>
+
+      <button @click="activeTab = 'select'"
+        class="mt-4 w-full rounded-xl bg-[var(--color-primary)] py-3 text-sm font-semibold text-white transition hover:bg-[var(--color-primary-hover)]">
+        Lanjut pilih paper →
+      </button>
+    </div>
+
+    <!-- Tab: Select Papers -->
+    <div v-if="activeTab === 'select'">
+      <!-- Source Filter -->
+      <div class="mb-4 flex flex-wrap items-center gap-2">
+        <span class="text-[12px] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Sumber:</span>
+        <button @click="onSourceFilterChange('all')"
+          class="rounded-full px-3.5 py-1.5 text-[12px] font-medium transition"
+          :class="sourceFilter === 'all' ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]' : 'bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-sub)] hover:bg-gray-50'">
+          Semua
+        </button>
+        <button @click="onSourceFilterChange('uploaded')"
+          class="rounded-full px-3.5 py-1.5 text-[12px] font-medium transition"
+          :class="sourceFilter === 'uploaded' ? 'bg-green-50 text-green-600' : 'bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-sub)] hover:bg-gray-50'">
+          📄 Uploaded ({{ uploadStore.papers.length }})
+        </button>
+        <button v-for="col in collectionsStore.collections" :key="col.id"
+          @click="onSourceFilterChange(col.id)"
+          class="rounded-full px-3.5 py-1.5 text-[12px] font-medium transition"
+          :class="sourceFilter === col.id ? 'bg-purple-50 text-purple-600' : 'bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-sub)] hover:bg-gray-50'">
+          📁 {{ col.name }} ({{ col.paper_count || 0 }})
         </button>
       </div>
 
-      <!-- Empty State -->
-      <div v-else-if="!uploadStore.uploading" class="mt-8 text-center text-[var(--color-text-muted)] text-[13px]">
-        Belum ada paper yang di-upload. Mulai dengan drag & drop PDF di atas.
-      </div>
-    </div>
-
-    <!-- Tab 2: Select Papers -->
-    <div v-if="activeTab === 'select'">
-      <!-- Counter -->
+      <!-- Counter + actions -->
       <div class="mb-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="rounded-lg px-3 py-1.5 text-[13px] font-semibold"
             :class="canAnalyze ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]' : 'bg-gray-100 text-[var(--color-text-muted)]'">
             {{ selectedCount }} / 10 dipilih
           </div>
-          <span class="text-[12px] text-[var(--color-text-sub)]">Minimal 3 paper untuk analisis</span>
+          <span class="text-[12px] text-[var(--color-text-sub)]">Minimal 3 paper</span>
         </div>
-        <!-- Progress bar -->
-        <div class="w-48 h-1.5 rounded-full bg-gray-100">
-          <div class="h-full rounded-full transition-all duration-300"
-            :style="{ width: `${(selectedCount / 10) * 100}%` }"
-            :class="canAnalyze ? 'bg-[var(--color-primary)]' : 'bg-gray-300'"></div>
+        <div class="flex gap-2">
+          <button @click="selectAll" class="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[11.5px] text-[var(--color-text-sub)] hover:bg-gray-50 transition">Pilih Semua</button>
+          <button @click="deselectAll" class="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[11.5px] text-[var(--color-text-sub)] hover:bg-gray-50 transition">Reset</button>
         </div>
       </div>
 
+      <!-- Progress bar -->
+      <div class="mb-4 h-1.5 w-full rounded-full bg-gray-100">
+        <div class="h-full rounded-full transition-all duration-300"
+          :style="{ width: `${(selectedCount / 10) * 100}%` }"
+          :class="canAnalyze ? 'bg-[var(--color-primary)]' : 'bg-gray-300'"></div>
+      </div>
+
+      <!-- Loading -->
+      <div v-if="loadingCollection" class="flex justify-center py-8">
+        <div class="h-7 w-7 animate-spin rounded-full border-3 border-[var(--color-primary)] border-t-transparent"></div>
+      </div>
+
       <!-- Paper Grid -->
-      <div class="grid grid-cols-2 gap-3">
-        <div v-for="paper in uploadStore.papers" :key="paper.id"
+      <div v-else-if="allPapers.length" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div v-for="paper in allPapers" :key="paper.id"
           @click="togglePaper(paper.id)"
           class="cursor-pointer rounded-xl border-2 p-4 transition"
           :class="isSelected(paper.id) ? 'border-[var(--color-primary)] bg-[var(--color-primary-soft)]' : 'border-[var(--color-border)] bg-[var(--color-surface)] hover:border-gray-300'">
           <div class="flex items-start gap-3">
-            <!-- Checkbox -->
             <div class="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border-2 transition"
               :class="isSelected(paper.id) ? 'border-[var(--color-primary)] bg-[var(--color-primary)]' : 'border-gray-300'">
               <svg v-if="isSelected(paper.id)" width="12" height="12" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24">
@@ -221,10 +380,15 @@ const gapData = computed(() => {
               </svg>
             </div>
             <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5 mb-1">
+                <span class="rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
+                  :class="paper.source === 'uploaded' ? 'bg-green-50 text-green-600' : 'bg-purple-50 text-purple-600'">
+                  {{ paper.source_label }}
+                </span>
+              </div>
               <div class="text-[13.5px] font-semibold text-[var(--color-text)] leading-snug line-clamp-2">{{ paper.title }}</div>
               <div class="text-[11.5px] text-[var(--color-text-sub)] mt-1.5">
-                {{ paper.authors?.slice(0, 3).join(', ') || 'Unknown' }}
-                <span v-if="(paper.authors?.length || 0) > 3"> et al.</span>
+                {{ formatAuthors(paper.authors) }}
               </div>
               <div class="flex gap-3 mt-2 text-[11px] text-[var(--color-text-muted)]">
                 <span v-if="paper.year">{{ paper.year }}</span>
@@ -232,6 +396,18 @@ const gapData = computed(() => {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Empty -->
+      <div v-else class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] py-12 text-center">
+        <div class="text-4xl mb-2">📄</div>
+        <p class="text-[13px] text-[var(--color-text-sub)]">
+          Belum ada paper. Upload PDF atau simpan paper dari pencarian ke koleksi terlebih dahulu.
+        </p>
+        <div class="mt-4 flex justify-center gap-2">
+          <button @click="activeTab = 'upload'" class="rounded-xl bg-[var(--color-primary)] px-4 py-2 text-[13px] font-semibold text-white">Upload PDF</button>
+          <router-link to="/search" class="rounded-xl border border-[var(--color-border)] px-4 py-2 text-[13px] font-medium text-[var(--color-text-sub)] hover:bg-gray-50 transition">Cari Paper</router-link>
         </div>
       </div>
 
@@ -246,7 +422,7 @@ const gapData = computed(() => {
       </button>
     </div>
 
-    <!-- Tab 3: Results -->
+    <!-- Tab: Results (unchanged) -->
     <div v-if="activeTab === 'result'">
       <!-- Loading -->
       <div v-if="aiStore.loading" class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] py-20 text-center">
@@ -257,9 +433,7 @@ const gapData = computed(() => {
         <p class="mt-1.5 text-[13px] text-[var(--color-text-sub)]">Membaca {{ selectedCount }} paper dan mengidentifikasi celah penelitian</p>
       </div>
 
-      <!-- Results -->
       <div v-else-if="gapData">
-        <!-- Header -->
         <div class="mb-5 rounded-xl bg-gradient-to-r from-[var(--color-primary-soft)] to-purple-50 border border-blue-100 px-5 py-4 flex items-center justify-between">
           <div class="flex items-center gap-3">
             <svg width="20" height="20" fill="none" stroke="var(--color-primary)" stroke-width="1.5" viewBox="0 0 24 24">
@@ -270,9 +444,7 @@ const gapData = computed(() => {
               <div class="text-[12px] text-[var(--color-text-sub)]">Berdasarkan {{ selectedCount }} paper · Powered by Groq AI</div>
             </div>
           </div>
-          <button @click="resetAnalysis" class="rounded-lg border border-[var(--color-border)] bg-white px-3 py-1.5 text-[12px] font-medium text-[var(--color-text-sub)] hover:bg-gray-50 transition">
-            Analisis Ulang
-          </button>
+          <button @click="resetAnalysis" class="rounded-lg border border-[var(--color-border)] bg-white px-3 py-1.5 text-[12px] font-medium text-[var(--color-text-sub)] hover:bg-gray-50 transition">Analisis Ulang</button>
         </div>
 
         <!-- 1. Topik Dominan -->
@@ -324,9 +496,7 @@ const gapData = computed(() => {
             <div class="flex items-center gap-2 mb-1.5">
               <span class="text-[13.5px] font-semibold text-[var(--color-text)]">{{ g.title }}</span>
               <span class="rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
-                :class="g.priority === 'Tinggi' ? 'bg-red-500' : 'bg-orange-400'">
-                Prioritas {{ g.priority }}
-              </span>
+                :class="g.priority === 'Tinggi' ? 'bg-red-500' : 'bg-orange-400'">Prioritas {{ g.priority }}</span>
             </div>
             <p class="text-[12.5px] text-[var(--color-text-sub)] leading-relaxed m-0">{{ g.desc }}</p>
           </div>
@@ -347,7 +517,6 @@ const gapData = computed(() => {
           </div>
         </div>
 
-        <!-- Raw response fallback -->
         <div v-if="gapData.raw" class="mt-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-4">
           <details>
             <summary class="text-[12px] font-medium text-[var(--color-text-muted)] cursor-pointer">Raw AI Response</summary>
@@ -356,7 +525,6 @@ const gapData = computed(() => {
         </div>
       </div>
 
-      <!-- Empty state -->
       <div v-else class="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] py-20 text-center">
         <div class="text-5xl mb-3">💡</div>
         <h3 class="text-base font-bold">Belum ada hasil analisis</h3>

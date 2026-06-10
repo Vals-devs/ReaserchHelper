@@ -24,6 +24,7 @@ class CollectionResponse(BaseModel):
     description: str | None = None
     is_public: bool
     created_at: datetime
+    paper_count: int = 0
 
     model_config = {"from_attributes": True}
 
