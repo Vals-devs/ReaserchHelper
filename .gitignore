@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# Docker volumes
+pgdata/
+redisdata/
+
+# Uploaded files
+backend/uploads/*.pdf
+backend/researchfinder.db
+
+# Build
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
