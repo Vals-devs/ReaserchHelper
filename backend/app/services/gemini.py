@@ -159,72 +159,29 @@ async def chat_completion(
     temperature: float = 0.3,
     max_tokens: int = 2048,
 ) -> str:
-    """Send a chat completion request with list of messages (system, user, assistant)."""
+    """Send a chat completion request with list of messages using generate_content."""
     system_instruction = ""
-    contents = []
+    prompt_parts = []
 
     for msg in messages:
         role = msg.get("role", "user")
         content = msg.get("content", "")
         if role == "system":
             system_instruction += content + "\n"
-        else:
-            gemini_role = "model" if role in ("assistant", "model") else "user"
-            contents.append({
-                "role": gemini_role,
-                "parts": [{"text": content}]
-            })
+        elif role in ("user", "human"):
+            prompt_parts.append(f"User: {content}")
+        elif role in ("assistant", "model"):
+            prompt_parts.append(f"Assistant: {content}")
 
-    if not contents:
-        contents = [{"role": "user", "parts": [{"text": "Hello"}]}]
+    prompt = "\n\n".join(prompt_parts) if prompt_parts else "Hello"
 
-    target_model = model or settings.GEMINI_MODEL or "gemini-2.5-flash"
-    url = f"{BASE_URL}/{target_model}:generateContent?key={settings.GEMINI_API_KEY}"
-
-    payload: dict = {
-        "contents": contents,
-        "generationConfig": {
-            "temperature": temperature,
-            "maxOutputTokens": max_tokens,
-        },
-    }
-
-    if system_instruction.strip():
-        payload["systemInstruction"] = {
-            "parts": [{"text": system_instruction.strip()}]
-        }
-
-    max_retries = 2
-    for attempt in range(max_retries + 1):
-        try:
-            async with httpx.AsyncClient(timeout=60) as client:
-                resp = await client.post(
-                    url,
-                    json=payload,
-                    headers={"Content-Type": "application/json"},
-                )
-                if resp.status_code in (429, 503) and attempt < max_retries:
-                    wait_time = (attempt + 1) * 3.0
-                    logger.warning(f"Gemini chat_completion returned {resp.status_code}. Retrying in {wait_time}s...")
-                    await asyncio.sleep(wait_time)
-                    continue
-                resp.raise_for_status()
-                data = resp.json()
-                candidates = data.get("candidates", [])
-                if candidates and "content" in candidates[0]:
-                    parts = candidates[0]["content"].get("parts", [])
-                    if parts and "text" in parts[0]:
-                        return parts[0]["text"]
-                return ""
-        except Exception as e:
-            if attempt < max_retries:
-                wait_time = (attempt + 1) * 3.0
-                await asyncio.sleep(wait_time)
-                continue
-            logger.error(f"Gemini chat_completion failed: {e}")
-            return f"[Gemini chat_completion failed: {e}]"
-
-    return "[Gemini chat_completion failed]"
+    return await generate_content(
+        prompt=prompt,
+        system_instruction=system_instruction.strip(),
+        model=model,
+        temperature=temperature,
+        max_tokens=max_tokens,
+    )
 
 
 async def summarize_paper(title: str, abstract: str) -> dict:
