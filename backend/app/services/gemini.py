@@ -66,13 +66,16 @@ async def generate_content(
     max_tokens: int = 2048,
     json_output: bool = False,
 ) -> str:
-    """Send a generateContent request to Gemini API with automatic retries."""
+    """Send a generateContent request to Gemini API with automatic retries and model fallback."""
     if not settings.GEMINI_API_KEY:
         logger.warning("GEMINI_API_KEY is not configured")
         return "[Gemini API key not configured]"
 
-    target_model = model or settings.GEMINI_MODEL or "gemini-2.5-flash"
-    url = f"{BASE_URL}/{target_model}:generateContent?key={settings.GEMINI_API_KEY}"
+    primary_model = model or settings.GEMINI_MODEL or "gemini-1.5-flash"
+    candidate_models = [primary_model]
+    for fallback in ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.5-flash"]:
+        if fallback not in candidate_models:
+            candidate_models.append(fallback)
 
     payload: dict = {
         "contents": [
@@ -95,47 +98,55 @@ async def generate_content(
             "parts": [{"text": system_instruction}]
         }
 
-    max_retries = 2
-    for attempt in range(max_retries + 1):
-        try:
-            async with httpx.AsyncClient(timeout=60) as client:
-                resp = await client.post(
-                    url,
-                    json=payload,
-                    headers={"Content-Type": "application/json"},
-                )
-                if resp.status_code in (429, 503) and attempt < max_retries:
+    for current_model in candidate_models:
+        url = f"{BASE_URL}/{current_model}:generateContent?key={settings.GEMINI_API_KEY}"
+        max_retries = 2
+        for attempt in range(max_retries + 1):
+            try:
+                async with httpx.AsyncClient(timeout=60) as client:
+                    resp = await client.post(
+                        url,
+                        json=payload,
+                        headers={"Content-Type": "application/json"},
+                    )
+                    if resp.status_code == 404:
+                        logger.warning(f"Gemini model {current_model} returned 404. Trying next model...")
+                        break  # Try next candidate_model
+
+                    if resp.status_code in (429, 503) and attempt < max_retries:
+                        wait_time = (attempt + 1) * 3.0
+                        logger.warning(f"Gemini API ({current_model}) returned {resp.status_code}. Retrying in {wait_time}s...")
+                        await asyncio.sleep(wait_time)
+                        continue
+
+                    resp.raise_for_status()
+                    data = resp.json()
+                    candidates = data.get("candidates", [])
+                    if candidates and "content" in candidates[0]:
+                        parts = candidates[0]["content"].get("parts", [])
+                        if parts and "text" in parts[0]:
+                            return parts[0]["text"]
+                    return ""
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 404:
+                    logger.warning(f"Gemini model {current_model} returned 404. Trying next model...")
+                    break
+                if e.response.status_code in (429, 503) and attempt < max_retries:
                     wait_time = (attempt + 1) * 3.0
-                    logger.warning(f"Gemini API returned status {resp.status_code}. Retrying in {wait_time}s...")
+                    logger.warning(f"Gemini API HTTPStatusError {e.response.status_code}. Retrying in {wait_time}s...")
                     await asyncio.sleep(wait_time)
                     continue
-                resp.raise_for_status()
-                data = resp.json()
-                
-                candidates = data.get("candidates", [])
-                if candidates and "content" in candidates[0]:
-                    parts = candidates[0]["content"].get("parts", [])
-                    if parts and "text" in parts[0]:
-                        return parts[0]["text"]
-                
-                return ""
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code in (429, 503) and attempt < max_retries:
-                wait_time = (attempt + 1) * 3.0
-                logger.warning(f"Gemini API HTTPStatusError {e.response.status_code}. Retrying in {wait_time}s...")
-                await asyncio.sleep(wait_time)
-                continue
-            error_body = e.response.text[:300] if e.response else "unknown"
-            logger.error(f"Gemini API error ({e.response.status_code}): {error_body}")
-            return f"[Gemini API error: {e.response.status_code}]"
-        except Exception as e:
-            if attempt < max_retries:
-                wait_time = (attempt + 1) * 3.0
-                logger.warning(f"Gemini request failed: {e}. Retrying in {wait_time}s...")
-                await asyncio.sleep(wait_time)
-                continue
-            logger.error(f"Gemini request failed: {e}")
-            return f"[Gemini request failed: {e}]"
+                error_body = e.response.text[:300] if e.response else "unknown"
+                logger.error(f"Gemini API error ({e.response.status_code}): {error_body}")
+                return f"[Gemini API error: {e.response.status_code}]"
+            except Exception as e:
+                if attempt < max_retries:
+                    wait_time = (attempt + 1) * 3.0
+                    logger.warning(f"Gemini request failed: {e}. Retrying in {wait_time}s...")
+                    await asyncio.sleep(wait_time)
+                    continue
+                logger.error(f"Gemini request failed: {e}")
+                return f"[Gemini request failed: {e}]"
 
     return "[Gemini request failed]"
 

@@ -6,6 +6,7 @@ export const useAIStore = defineStore('ai', () => {
   const summary = ref<Record<string, unknown> | null>(null)
   const explanation = ref<string>('')
   const gapResult = ref<Record<string, unknown> | null>(null)
+  const gapError = ref<string | null>(null)
   const loading = ref(false)
 
   async function summarize(paperId: string) {
@@ -30,13 +31,16 @@ export const useAIStore = defineStore('ai', () => {
 
   async function analyzeGaps(paperIds: string[]) {
     loading.value = true
+    gapError.value = null
     try {
       const { data } = await api.post('/ai/gap-analysis', { paper_ids: paperIds })
       gapResult.value = data.gaps || data
+    } catch (err: any) {
+      gapError.value = err.response?.data?.detail || err.message || 'Gagal melakukan analisis research gap.'
     } finally {
       loading.value = false
     }
   }
 
-  return { summary, explanation, gapResult, loading, summarize, explain, analyzeGaps }
+  return { summary, explanation, gapResult, gapError, loading, summarize, explain, analyzeGaps }
 })

@@ -567,6 +567,25 @@ function parseMarkdown(text: string): string {
         <p class="mt-1 text-sm text-[var(--color-text-sub)]">Membaca {{ selectedCount }} paper dan mengidentifikasi celah penelitian</p>
       </div>
 
+      <!-- Error State -->
+      <div v-else-if="aiStore.gapError" class="rounded-lg border border-red-200 bg-red-50 p-8 text-center">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-3">
+          <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h3 class="text-base font-semibold text-red-800">Gagal Melakukan Analisis Research Gap</h3>
+        <p class="mt-2 text-sm text-red-700 max-w-md mx-auto">{{ aiStore.gapError }}</p>
+        <div class="mt-5 flex justify-center gap-3">
+          <button @click="activeTab = 'select'" class="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition">
+            Kembali ke Pemilihan Paper
+          </button>
+          <button @click="runAnalysis" class="rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 transition">
+            Coba Lagi
+          </button>
+        </div>
+      </div>
+
       <div v-else-if="gapData">
         <div class="mb-4 rounded-lg bg-[var(--color-bg)] border border-[var(--color-border)] px-4 py-3 flex items-center justify-between">
           <div class="flex items-center gap-2.5">
@@ -575,7 +594,7 @@ function parseMarkdown(text: string): string {
             </svg>
             <div>
               <div class="text-sm font-medium text-[var(--color-text)]">Analisis Selesai</div>
-              <div class="text-xs text-[var(--color-text-sub)]">Berdasarkan {{ selectedCount }} paper · Powered by Groq AI</div>
+              <div class="text-xs text-[var(--color-text-sub)]">Berdasarkan {{ selectedCount }} paper · Powered by Gemini AI</div>
             </div>
           </div>
           <button @click="resetAnalysis" class="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-xs font-medium text-[var(--color-text-sub)] hover:bg-zinc-50 transition">Analisis Ulang</button>
