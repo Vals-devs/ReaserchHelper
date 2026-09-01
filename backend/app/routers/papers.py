@@ -3,11 +3,11 @@
 import asyncio
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.core.database import get_db, async_session_factory
 from app.core.security import get_current_user
 from app.models.user import User
 from app.models.paper import Paper
@@ -26,6 +26,54 @@ async def _noop_s2():
 
 async def _noop_arxiv():
     return []
+
+
+async def _bg_cache_search_results(user_id: str, q: str, filters: dict, papers: list[dict]):
+    """Bulk cache search results and save search history in the background."""
+    ext_ids = [p["external_id"] for p in papers if p.get("external_id")]
+    if not ext_ids:
+        return
+
+    try:
+        async with async_session_factory() as db:
+            result = await db.execute(select(Paper.external_id).where(Paper.external_id.in_(ext_ids)))
+            existing_ids = set(result.scalars().all())
+
+            new_papers = []
+            for p in papers:
+                if p.get("external_id") not in existing_ids:
+                    existing_ids.add(p["external_id"])
+                    new_papers.append(
+                        Paper(
+                            external_id=p["external_id"],
+                            source=p["source"],
+                            title=p["title"],
+                            authors=p.get("authors", []),
+                            abstract=p.get("abstract"),
+                            year=p.get("year"),
+                            doi=p.get("doi"),
+                            url=p.get("url"),
+                            citation_count=p.get("citation_count", 0),
+                            fields_of_study=p.get("fields_of_study", []),
+                            journal=p.get("journal"),
+                            accreditation=p.get("accreditation"),
+                        )
+                    )
+
+            if new_papers:
+                db.add_all(new_papers)
+
+            # Save search history
+            history = SearchHistory(
+                user_id=user_id,
+                query=q,
+                filters=filters,
+                result_count=len(papers),
+            )
+            db.add(history)
+            await db.commit()
+    except Exception as e:
+        logger.warning(f"Background caching failed: {e}")
 
 
 def _merge_results(s2_results: list[dict], arxiv_results: list[dict]) -> list[dict]:
@@ -97,6 +145,7 @@ async def _cache_paper(db: AsyncSession, paper_data: dict) -> Paper:
 
 @router.get("/search")
 async def search_papers(
+    background_tasks: BackgroundTasks,
     q: str = Query(..., min_length=1, description="Search query"),
     source: str = Query("all", description="Source: all, semantic_scholar, arxiv"),
     year_from: int | None = Query(None, description="Filter: year from"),
@@ -161,42 +210,12 @@ async def search_papers(
         # Merge and deduplicate
         merged = _merge_results(s2_results, arxiv_results)
 
-        # Cache papers in DB
-        for paper_data in merged[:50]:  # Cache up to 50 per search
-            try:
-                async with db.begin_nested():
-                    await _cache_paper(db, paper_data)
-            except Exception as e:
-                logger.warning(f"Failed to cache paper: {e}")
+        # Assign external_id as default ID instantly
+        result_with_ids = [{**p, "id": p["external_id"]} for p in merged]
 
-        # Save search history
-        try:
-            async with db.begin_nested():
-                history = SearchHistory(
-                    user_id=current_user.id,
-                    query=q,
-                    filters={"source": source, "year_from": year_from, "year_to": year_to, "field": field},
-                    result_count=len(merged),
-                )
-                db.add(history)
-        except Exception as e:
-            logger.warning(f"Failed to save search history: {e}")
-
-        # Add IDs from DB cache to results
-        result_with_ids = []
-        for paper in merged:
-            try:
-                result_obj = await db.execute(
-                    select(Paper).where(
-                        Paper.external_id == paper["external_id"],
-                        Paper.source == paper["source"],
-                    )
-                )
-                cached = result_obj.scalar_one_or_none()
-                paper_with_id = {**paper, "id": cached.id if cached else paper["external_id"]}
-            except Exception:
-                paper_with_id = {**paper, "id": paper["external_id"]}
-            result_with_ids.append(paper_with_id)
+        # Enqueue background caching & history saving without blocking HTTP response
+        filters = {"source": source, "year_from": year_from, "year_to": year_to, "field": field}
+        background_tasks.add_task(_bg_cache_search_results, current_user.id, q, filters, merged[:50])
 
         response = {
             "query": q,
