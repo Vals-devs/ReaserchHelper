@@ -21,7 +21,7 @@ class User(Base):
     institution: Mapped[str | None] = mapped_column(String(255), nullable=True)
     research_interests: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
 
     # Relationships

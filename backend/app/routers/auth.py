@@ -21,23 +21,30 @@ router = APIRouter()
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def register(data: UserCreate, db: AsyncSession = Depends(get_db)):
     """Register a new user and return JWT."""
-    result = await db.execute(select(User).where(User.email == data.email))
-    if result.scalar_one_or_none():
-        raise HTTPException(status_code=400, detail="Email already registered")
+    try:
+        result = await db.execute(select(User).where(User.email == data.email))
+        if result.scalar_one_or_none():
+            raise HTTPException(status_code=400, detail="Email already registered")
 
-    user = User(
-        name=data.name,
-        email=data.email,
-        password=hash_password(data.password),
-        institution=data.institution,
-        research_interests=data.research_interests,
-    )
-    db.add(user)
-    await db.flush()
-    await db.refresh(user)
+        user = User(
+            name=data.name,
+            email=data.email,
+            password=hash_password(data.password),
+            institution=data.institution,
+            research_interests=data.research_interests,
+        )
+        db.add(user)
+        await db.flush()
+        await db.refresh(user)
 
-    token = create_access_token({"sub": str(user.id)})
-    return TokenResponse(access_token=token, token_type="bearer", user=UserResponse.model_validate(user))
+        token = create_access_token({"sub": str(user.id)})
+        return TokenResponse(access_token=token, token_type="bearer", user=UserResponse.model_validate(user))
+    except HTTPException:
+        raise
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Registration failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
 @router.post("/login", response_model=TokenResponse)
