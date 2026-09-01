@@ -160,10 +160,7 @@ async def search_papers(
     year_to: int | None = None,
     fields_of_study: str | None = None,
 ) -> dict:
-    """Search papers on Semantic Scholar.
-
-    Returns: {"results": list[dict], "total": int}
-    """
+    """Search papers on Semantic Scholar with fast failover on rate limits."""
     # Check cache first
     cache_key = f"{query}:{limit}:{offset}:{year_from}:{year_to}:{fields_of_study}"
     cached = _search_cache.get(cache_key)
@@ -175,7 +172,7 @@ async def search_papers(
         "query": query,
         "limit": min(limit, 100),
         "offset": offset,
-        "fields": "title,authors,year,abstract,citationCount,externalIds,url,fieldsOfStudy,venue,publicationVenue,journal",
+        "fields": "title,authors,year,abstract,citationCount,externalIds,url,fieldsOfStudy,venue",
     }
     if year_from or year_to:
         yr = f"{year_from or ''}-{year_to or ''}"
@@ -183,20 +180,26 @@ async def search_papers(
     if fields_of_study:
         params["fieldsOfStudy"] = fields_of_study
 
-    max_retries = 2
+    max_retries = 1 if settings.SEMANTIC_SCHOLAR_API_KEY else 0
     for attempt in range(max_retries + 1):
-        await _rate_limit()
+        if settings.SEMANTIC_SCHOLAR_API_KEY:
+            await _rate_limit()
+
         try:
-            async with httpx.AsyncClient(timeout=20) as client:
+            async with httpx.AsyncClient(timeout=6.0) as client:
                 resp = await client.get(
                     f"{BASE_URL}/paper/search",
                     params=params,
                     headers=get_headers(),
                 )
-                if resp.status_code == 429 and attempt < max_retries:
-                    logger.warning(f"Semantic Scholar search returned 429. Retrying in 2 seconds (attempt {attempt + 1}/{max_retries})...")
-                    await asyncio.sleep(2.0)
-                    continue
+                if resp.status_code == 429:
+                    logger.warning("Semantic Scholar returned 429 Rate Limit.")
+                    return {
+                        "results": [],
+                        "total": 0,
+                        "error": "Batas permintaan (rate limit) Semantic Scholar terlampaui. Menampilkan hasil dari arXiv.",
+                    }
+
                 resp.raise_for_status()
                 data = resp.json()
 
@@ -206,23 +209,20 @@ async def search_papers(
             return response_data
 
         except httpx.HTTPStatusError as e:
-            if e.response.status_code == 429 and attempt < max_retries:
-                logger.warning(f"Semantic Scholar search HTTP status error 429. Retrying in 2 seconds (attempt {attempt + 1}/{max_retries})...")
-                await asyncio.sleep(2.0)
-                continue
-            logger.error(f"Semantic Scholar API error ({e.response.status_code}): {e.response.text[:200]}")
             if e.response.status_code == 429:
                 return {
                     "results": [],
                     "total": 0,
-                    "error": "Batas permintaan (rate limit) Semantic Scholar terlampaui. Menampilkan hasil pencarian dari arXiv sebagai cadangan."
+                    "error": "Batas permintaan Semantic Scholar terlampaui. Menampilkan hasil dari arXiv.",
                 }
+            logger.error(f"Semantic Scholar API error ({e.response.status_code}): {e.response.text[:200]}")
             return {"results": [], "total": 0, "error": f"Semantic Scholar error: {e.response.status_code}"}
         except Exception as e:
             if attempt < max_retries:
-                logger.warning(f"Semantic Scholar search request failed: {e}. Retrying in 2 seconds...")
-                await asyncio.sleep(2.0)
+                await asyncio.sleep(1.0)
                 continue
+            logger.warning(f"Semantic Scholar request failed: {e}")
+            return {"results": [], "total": 0, "error": "Semantic Scholar tidak merespons. Menampilkan hasil dari arXiv."}
             logger.error(f"Semantic Scholar request failed: {e}")
             return {"results": [], "total": 0, "error": f"Semantic Scholar unavailable: {e}"}
 

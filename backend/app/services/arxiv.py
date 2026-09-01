@@ -48,7 +48,7 @@ async def search_papers(query: str, max_results: int = 20, start: int = 0) -> li
         "sortBy": "relevance",
     }
     try:
-        async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=8.0, follow_redirects=True) as client:
             resp = await client.get(BASE_URL, params=params)
             resp.raise_for_status()
 

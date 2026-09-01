@@ -33,7 +33,7 @@ export const usePapersStore = defineStore('papers', () => {
     error.value = ''
     errors.value = []
     try {
-      const { data } = await api.get('/papers/search', { params: { q, ...filters } })
+      const { data } = await api.get('/papers/search', { params: { q, ...filters }, timeout: 20000 })
       results.value = data.results
       total.value = data.total
       sources.value = data.sources || { semantic_scholar: 0, arxiv: 0 }
