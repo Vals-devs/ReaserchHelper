@@ -106,106 +106,115 @@ async def search_papers(
     current_user: User = Depends(get_current_user),
 ):
     """Search papers from Semantic Scholar and/or arXiv concurrently."""
-    errors: list[str] = []
-    s2_results: list[dict] = []
-    arxiv_results: list[dict] = []
-
-    # Fetch from both sources concurrently
-    tasks = []
-
-    if source in ("all", "semantic_scholar"):
-        tasks.append(
-            s2_service.search_papers(
-                query=q,
-                limit=limit,
-                offset=offset,
-                year_from=year_from,
-                year_to=year_to,
-                fields_of_study=field,
-            )
-        )
-    else:
-        tasks.append(_noop_s2())
-
-    if source in ("all", "arxiv"):
-        tasks.append(arxiv_service.search_papers(query=q, max_results=limit, start=offset))
-    else:
-        tasks.append(_noop_arxiv())
-
     try:
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        errors: list[str] = []
+        s2_results: list[dict] = []
+        arxiv_results: list[dict] = []
 
-        # Process Semantic Scholar results
-        s2_data = results[0]
-        if isinstance(s2_data, Exception):
-            errors.append(f"Semantic Scholar: {s2_data}")
-        elif isinstance(s2_data, dict):
-            s2_results = s2_data.get("results", [])
-            if s2_data.get("error"):
-                errors.append(s2_data["error"])
+        # Fetch from both sources concurrently
+        tasks = []
 
-        # Process arXiv results
-        arxiv_data = results[1]
-        if isinstance(arxiv_data, Exception):
-            errors.append(f"arXiv: {arxiv_data}")
-        elif isinstance(arxiv_data, list):
-            arxiv_results = arxiv_data
+        if source in ("all", "semantic_scholar"):
+            tasks.append(
+                s2_service.search_papers(
+                    query=q,
+                    limit=limit,
+                    offset=offset,
+                    year_from=year_from,
+                    year_to=year_to,
+                    fields_of_study=field,
+                )
+            )
+        else:
+            tasks.append(_noop_s2())
 
-    except Exception as e:
-        logger.error(f"Search aggregation error: {e}")
-        errors.append(str(e))
+        if source in ("all", "arxiv"):
+            tasks.append(arxiv_service.search_papers(query=q, max_results=limit, start=offset))
+        else:
+            tasks.append(_noop_arxiv())
 
-    # Merge and deduplicate
-    merged = _merge_results(s2_results, arxiv_results)
+        try:
+            results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    # Cache papers in DB
-    for paper_data in merged[:50]:  # Cache up to 50 per search
+            # Process Semantic Scholar results
+            s2_data = results[0]
+            if isinstance(s2_data, Exception):
+                errors.append(f"Semantic Scholar: {s2_data}")
+            elif isinstance(s2_data, dict):
+                s2_results = s2_data.get("results", [])
+                if s2_data.get("error"):
+                    errors.append(s2_data["error"])
+
+            # Process arXiv results
+            arxiv_data = results[1]
+            if isinstance(arxiv_data, Exception):
+                errors.append(f"arXiv: {arxiv_data}")
+            elif isinstance(arxiv_data, list):
+                arxiv_results = arxiv_data
+
+        except Exception as e:
+            logger.error(f"Search aggregation error: {e}")
+            errors.append(str(e))
+
+        # Merge and deduplicate
+        merged = _merge_results(s2_results, arxiv_results)
+
+        # Cache papers in DB
+        for paper_data in merged[:50]:  # Cache up to 50 per search
+            try:
+                async with db.begin_nested():
+                    await _cache_paper(db, paper_data)
+            except Exception as e:
+                logger.warning(f"Failed to cache paper: {e}")
+
+        # Save search history
         try:
             async with db.begin_nested():
-                await _cache_paper(db, paper_data)
+                history = SearchHistory(
+                    user_id=current_user.id,
+                    query=q,
+                    filters={"source": source, "year_from": year_from, "year_to": year_to, "field": field},
+                    result_count=len(merged),
+                )
+                db.add(history)
         except Exception as e:
-            logger.warning(f"Failed to cache paper: {e}")
+            logger.warning(f"Failed to save search history: {e}")
 
-    # Save search history
-    try:
-        async with db.begin_nested():
-            history = SearchHistory(
-                user_id=current_user.id,
-                query=q,
-                filters={"source": source, "year_from": year_from, "year_to": year_to, "field": field},
-                result_count=len(merged),
-            )
-            db.add(history)
+        # Add IDs from DB cache to results
+        result_with_ids = []
+        for i, paper in enumerate(merged):
+            try:
+                result_obj = await db.execute(
+                    select(Paper).where(
+                        Paper.external_id == paper["external_id"],
+                        Paper.source == paper["source"],
+                    )
+                )
+                cached = result_obj.scalar_one_or_none()
+                paper_with_id = {**paper, "id": cached.id if cached else f"temp_{i}"}
+            except Exception:
+                paper_with_id = {**paper, "id": f"temp_{i}"}
+            result_with_ids.append(paper_with_id)
+
+        response = {
+            "query": q,
+            "results": result_with_ids,
+            "total": len(merged),
+            "sources": {
+                "semantic_scholar": len(s2_results),
+                "arxiv": len(arxiv_results),
+            },
+        }
+        if errors:
+            response["errors"] = errors
+
+        return response
+
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.warning(f"Failed to save search history: {e}")
-
-    # Add IDs from DB cache to results
-    result_with_ids = []
-    for i, paper in enumerate(merged):
-        # Try to find the cached paper to get its DB id
-        result_obj = await db.execute(
-            select(Paper).where(
-                Paper.external_id == paper["external_id"],
-                Paper.source == paper["source"],
-            )
-        )
-        cached = result_obj.scalar_one_or_none()
-        paper_with_id = {**paper, "id": cached.id if cached else f"temp_{i}"}
-        result_with_ids.append(paper_with_id)
-
-    response = {
-        "query": q,
-        "results": result_with_ids,
-        "total": len(merged),
-        "sources": {
-            "semantic_scholar": len(s2_results),
-            "arxiv": len(arxiv_results),
-        },
-    }
-    if errors:
-        response["errors"] = errors
-
-    return response
+        logger.error(f"Paper search endpoint error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 
 @router.get("/{paper_id}")
