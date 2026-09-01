@@ -12,8 +12,8 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
 
-MAX_CHARS_PER_PAPER = 4000
-MAX_TOTAL_CHARS = 20000
+MAX_CHARS_PER_PAPER = 2500
+MAX_TOTAL_CHARS = 15000
 
 
 def _parse_json_response(text: str) -> dict | list | str:
@@ -185,14 +185,19 @@ async def chat_completion(
 
 
 async def summarize_paper(title: str, abstract: str) -> dict:
-    """Generate a paper summary in Bahasa Indonesia."""
+    """Generate a high-quality paper summary in Bahasa Indonesia."""
     system_prompt = (
-        "Kamu adalah asisten peneliti yang meringkas paper ilmiah dalam bahasa Indonesia. "
-        "Selalu berikan output HANYA dalam format JSON valid dengan struktur: "
-        '{"ringkasan": "ringkasan 3-5 kalimat", "temuan_utama": ["poin 1", "poin 2", "poin 3"], "metodologi": "deskripsi singkat metodologi"}'
+        "Kamu adalah seorang Profesor dan Asisten Peneliti Akademis Senior yang berpengalaman dalam menelaah jurnal ilmiah. "
+        "Tugasmu adalah menganalisis paper ilmiah berikut dan membuat ringkasan yang informatif, mendalam, ilmiah, dan terstruktur dalam Bahasa Indonesia.\n\n"
+        "Panduan Komponen Output JSON:\n"
+        "- 'ringkasan': Sintesis 3-5 kalimat ilmiah yang padat, menjelaskan latar belakang masalah, tujuan utama penelitian, dan kesimpulan akhir.\n"
+        "- 'temuan_utama': Array berisi 3-5 poin temuan kualitatif/kuantitatif spesifik beserta signifikansi risetnya.\n"
+        "- 'metodologi': Deskripsi lugas mengenai pendekatan riset, dataset, algoritma/teknik yang digunakan, serta metrik evaluasinya.\n\n"
+        "Selalu berikan output HANYA dalam format JSON valid dengan struktur:\n"
+        '{"ringkasan": "...", "temuan_utama": ["poin 1", "poin 2"], "metodologi": "..."}'
     )
 
-    user_prompt = f"Judul: {title}\nAbstrak: {abstract}\n\nRingkas paper tersebut ke dalam format JSON."
+    user_prompt = f"Paper Ilmiah:\nJudul: {title}\nAbstrak: {abstract}\n\nBerikan ringkasan akademik lengkap dalam format JSON."
 
     result = await generate_content(
         prompt=user_prompt,
@@ -211,32 +216,48 @@ async def summarize_paper(title: str, abstract: str) -> dict:
 
 
 async def explain_text(text: str, language: str = "id") -> str:
-    """Explain text in plain language."""
-    lang_instruction = "bahasa Indonesia yang sederhana" if language == "id" else "simple English"
-    prompt = f"Jelaskan teks akademis berikut dalam {lang_instruction}, seperti menjelaskan ke teman yang bukan ahli:\n\n{text}"
+    """Explain complex academic text in plain, accessible language."""
+    if language == "id":
+        system_prompt = (
+            "Kamu adalah seorang Dosen dan Mentor Riset Akademik yang ramah dan komunikatif. "
+            "Tugasmu adalah menjelaskan bagian teks akademis berikut ke dalam Bahasa Indonesia yang sederhana, komunikatif, dan mudah dipahami oleh mahasiswa tingkat awal.\n"
+            "Gunakan analogi atau contoh nyata jika relevan, uraikan istilah ilmiah yang rumit dalam tanda kurung, dan gunakan struktur poin-poin agar nyaman dibaca."
+        )
+    else:
+        system_prompt = (
+            "You are an expert Academic Research Mentor. "
+            "Explain the following complex academic text in simple, clear, and plain English for students.\n"
+            "Use clear analogies, define technical terms in brackets, and break down complex concepts into readable points."
+        )
 
     return await generate_content(
-        prompt=prompt,
+        prompt=text,
+        system_instruction=system_prompt,
         temperature=0.3,
     )
 
 
 async def translate_text(text: str, target_language: str = "id") -> str:
-    """Translate text to target language (default: Indonesian)."""
+    """Translate academic text to formal target language (default: Indonesian PUEBI)."""
     if target_language == "id":
-        lang_name = "bahasa Indonesia yang formal dan akademis"
+        system_prompt = (
+            "Kamu adalah Penerjemah Akademis Profesional dan Editor Jurnal Ilmiah Internasional. "
+            "Tugasmu adalah menerjemahkan teks akademis berikut ke Bahasa Indonesia formal (baku & akademik) sesuai standar Pedoman Umum Ejaan Bahasa Indonesia (PUEBI).\n"
+            "Aturan Penulisan:\n"
+            "- Pertahankan istilah teknis/istilah asing yang spesifik dalam tanda kurung '(istilah)' pada kemunculan pertama.\n"
+            "- Jaga presisi makna ilmiah dan struktur kalimat akademis.\n"
+            "- Berikan HANYA teks terjemahan akhir tanpa kata pengantar atau komentar tambahan."
+        )
     else:
-        lang_name = "English (academic and formal)"
-
-    system_prompt = "Kamu adalah penerjemah akademis profesional. Berikan hanya terjemahan tanpa komentar tambahan."
-    prompt = (
-        f"Terjemahkan teks akademis berikut ke {lang_name}.\n"
-        "Pertahankan istilah teknis dalam tanda kurung jika perlu.\n\n"
-        f"Teks asli:\n{text}"
-    )
+        system_prompt = (
+            "You are a professional Academic Translator and Scientific Journal Editor. "
+            "Translate the following text into formal academic English.\n"
+            "Maintain technical terms in brackets where helpful and preserve scientific accuracy.\n"
+            "Provide ONLY the final translation without any introductory text."
+        )
 
     return await generate_content(
-        prompt=prompt,
+        prompt=text,
         system_instruction=system_prompt,
         temperature=0.2,
     )
@@ -247,14 +268,17 @@ async def extract_paper_metadata(full_text: str, title_hint: str = "") -> dict:
     text_sample = full_text[:4000]
 
     system_prompt = (
-        "Ekstrak metadata dari paper ilmiah berikut ke format JSON dengan kunci:\n"
-        '- "title": judul paper (string)\n'
-        '- "authors": daftar nama author (array of strings)\n'
-        '- "year": tahun publikasi (integer, atau null jika tidak ditemukan)\n'
-        '- "abstract": abstrak atau ringkasan paper (string, 3-5 kalimat)\n'
+        "Kamu adalah pakar ekstraksi data karya ilmiah berbasis AI. "
+        "Tugasmu adalah menganalisis teks paper berikut dan mengekstrak metadata utamanya secara presisi ke dalam format JSON.\n\n"
+        "Aturan Ekstraksi:\n"
+        "- 'title': Judul lengkap paper ilmiah.\n"
+        "- 'authors': Daftar nama penulis (array of strings).\n"
+        "- 'year': Tahun publikasi (integer, atau null jika tidak ditemukan).\n"
+        "- 'abstract': Abstrak atau ringkasan 3-5 kalimat dari teks paper.\n\n"
+        "Berikan output HANYA dalam format JSON valid."
     )
 
-    prompt = f'Title Hint: "{title_hint}"\n\nTeks paper:\n{text_sample}'
+    prompt = f'Title Hint (jika ada): "{title_hint}"\n\nTeks Paper:\n{text_sample}'
 
     result = await generate_content(
         prompt=prompt,
@@ -279,34 +303,38 @@ async def extract_paper_metadata(full_text: str, title_hint: str = "") -> dict:
 
 
 async def gap_analysis(papers: list[dict]) -> dict:
-    """Analyze research gaps across multiple papers with fast execution."""
+    """Analyze research gaps across multiple papers with deep academic prompts."""
     papers_text_parts = []
     for i, p in enumerate(papers):
-        # Truncate content to 1500 chars per paper for fast processing
         content = p.get("abstract") or p.get("full_text", "N/A") or "N/A"
-        if len(content) > 1500:
-            content = content[:1500] + "... [truncated]"
+        if len(content) > 1800:
+            content = content[:1800] + "... [truncated]"
         papers_text_parts.append(f"=== Paper {i+1}: {p.get('title', 'Untitled')} ===\n{content}")
 
     papers_text = "\n\n".join(papers_text_parts)
 
     system_prompt = (
-        "Kamu adalah profesor dan peneliti senior. "
-        "Analisis paper-paper berikut dan identifikasi research gap secara ringkas dan padat. "
+        "Kamu adalah seorang Guru Besar, Peneliti Senior, dan Ketua Dewan Penguji Riset Akademis. "
+        "Tugasmu adalah melakukan Analisis Celah Penelitian (Research Gap Analysis) yang kritis, akademis, dan komprehensif berdasarkan kumpulan paper referensi berikut.\n\n"
+        "Petunjuk Analisis:\n"
+        "1. 'topik_dominan': Identifikasi 2-4 tren topik utama yang paling sering dibahas beserta deskripsi tren risetnya.\n"
+        "2. 'metodologi': Evaluasi 2-4 pendekatan/algoritma/metode yang digunakan, frekuensinya (Sering/Sedang/Jarang), dan kelemahannya.\n"
+        "3. 'celah_penelitian': Identifikasi 2-4 celah riset (research gap) konkret yang belum tereksplorasi, sertakan penjelasan detail mengapa ini menjadi celah dan kontribusi ilmiah jika diteliti, serta prioritasnya (Tinggi/Sedang).\n"
+        "4. 'saran_topik': Berikan 3-5 usulan judul/topik skripsi/tugas akhir yang spesifik, inovatif, dan siap diteliti oleh mahasiswa.\n\n"
         "Selalu berikan output HANYA dalam format JSON valid dengan struktur:\n"
         "{\n"
-        '  "topik_dominan": [{"name": "nama topik", "count": 1, "desc": "deskripsi singkat"}],\n'
-        '  "metodologi": [{"name": "nama metode", "freq": "Sering/Sedang/Jarang", "desc": "deskripsi singkat"}],\n'
-        '  "celah_penelitian": [{"title": "judul celah", "desc": "penjelasan ringkas", "priority": "Tinggi/Sedang"}],\n'
-        '  "saran_topik": ["saran topik 1", "saran topik 2"]\n'
+        '  "topik_dominan": [{"name": "...", "count": 1, "desc": "..."}],\n'
+        '  "metodologi": [{"name": "...", "freq": "Sering/Sedang/Jarang", "desc": "..."}],\n'
+        '  "celah_penelitian": [{"title": "...", "desc": "...", "priority": "Tinggi/Sedang"}],\n'
+        '  "saran_topik": ["Saran Judul 1...", "Saran Judul 2..."]\n'
         "}"
     )
 
     result = await generate_content(
         prompt=papers_text,
         system_instruction=system_prompt,
-        temperature=0.2,
-        max_tokens=1500,
+        temperature=0.3,
+        max_tokens=2048,
         json_output=True,
     )
     parsed = _parse_json_response(result)
@@ -324,8 +352,9 @@ async def gap_analysis(papers: list[dict]) -> dict:
 async def extract_keywords(abstract: str) -> list[str]:
     """Extract key search terms from an abstract."""
     system_prompt = (
-        "Ekstrak 5-8 keyword penting dari abstrak berikut untuk query pencarian paper. "
-        "Berikan output sebagai JSON array of strings, contoh: [\"keyword1\", \"keyword2\"]"
+        "Kamu adalah pakar temu balik informasi (information retrieval) dan pustakawan ilmiah. "
+        "Tugasmu adalah menganalisis abstrak berikut dan mengekstrak 5-8 kata kunci/frasa akademis paling relevan (kombinasi Bahasa Inggris & Indonesia) untuk query pencarian paper ilmiah terkait.\n"
+        "Berikan output HANYA sebagai JSON array of strings, contoh: [\"deep learning\", \"cybersecurity\", \"vulnerability scanning\"]"
     )
 
     result = await generate_content(
