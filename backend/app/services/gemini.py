@@ -71,9 +71,9 @@ async def generate_content(
         logger.warning("GEMINI_API_KEY is not configured")
         return "[Gemini API key not configured]"
 
-    primary_model = model or settings.GEMINI_MODEL or "gemini-1.5-flash"
+    primary_model = model or settings.GEMINI_MODEL or "gemini-3.5-flash-lite"
     candidate_models = [primary_model]
-    for fallback in ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-2.5-flash"]:
+    for fallback in ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.6-flash", "gemini-flash-latest"]:
         if fallback not in candidate_models:
             candidate_models.append(fallback)
 

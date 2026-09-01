@@ -5,8 +5,8 @@ from app.services import gemini
 
 logger = logging.getLogger(__name__)
 
-MODEL_DEFAULT = "gemini-2.5-flash"
-MODEL_LONG = "gemini-2.5-flash"
+MODEL_DEFAULT = "gemini-3.5-flash-lite"
+MODEL_LONG = "gemini-3.5-flash-lite"
 
 # Forward function calls to Gemini service for full backward compatibility
 chat_completion = gemini.chat_completion
