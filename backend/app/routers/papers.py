@@ -87,6 +87,8 @@ async def _cache_paper(db: AsyncSession, paper_data: dict) -> Paper:
         url=paper_data.get("url"),
         citation_count=paper_data.get("citation_count", 0),
         fields_of_study=paper_data.get("fields_of_study", []),
+        journal=paper_data.get("journal"),
+        accreditation=paper_data.get("accreditation"),
     )
     db.add(paper)
     await db.flush()
@@ -242,6 +244,8 @@ async def get_paper(
             "url": paper.url,
             "citation_count": paper.citation_count,
             "fields_of_study": paper.fields_of_study,
+            "journal": paper.journal,
+            "accreditation": paper.accreditation,
             "page_count": paper.page_count,
         }
 

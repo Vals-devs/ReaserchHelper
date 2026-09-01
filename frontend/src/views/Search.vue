@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { usePapersStore } from '@/stores/papers'
+import AccreditationBadge from '@/components/AccreditationBadge.vue'
 
 const papersStore = usePapersStore()
 const router = useRouter()
@@ -133,7 +134,13 @@ function formatAuthors(authors: string[]): string {
           <!-- Header -->
           <div class="flex items-start justify-between gap-3">
             <div class="min-w-0 flex-1">
-              <div class="mb-1 flex flex-wrap items-center gap-1.5">
+              <div class="mb-1.5 flex flex-wrap items-center gap-1.5">
+                <!-- Accreditation badge -->
+                <AccreditationBadge
+                  :accreditation="paper.accreditation"
+                  :journal="paper.journal"
+                  :source="paper.source"
+                />
                 <!-- Source badge -->
                 <span class="rounded px-1.5 py-0.5 text-[10px] font-medium"
                   :class="paper.source === 'arxiv'
@@ -149,6 +156,10 @@ function formatAuthors(authors: string[]): string {
                   class="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600">
                   {{ field }}
                 </span>
+              </div>
+              <!-- Journal Name -->
+              <div v-if="paper.journal" class="mb-1 text-xs font-semibold text-[var(--color-primary)] truncate max-w-full">
+                {{ paper.journal }}
               </div>
               <h3 class="text-sm font-medium leading-snug text-[var(--color-text)]">{{ paper.title }}</h3>
             </div>

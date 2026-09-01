@@ -100,6 +100,8 @@ async def upload_pdf(
         abstract=metadata["abstract"] or None,
         full_text=pdf_data["full_text"],
         year=metadata["year"],
+        journal=metadata.get("journal", "Uploaded PDF"),
+        accreditation=metadata.get("accreditation", "PDF Uploaded"),
         uploaded_file_path=str(file_path),
         page_count=pdf_data["page_count"],
     )
@@ -113,6 +115,8 @@ async def upload_pdf(
         "authors": paper.authors,
         "year": paper.year,
         "abstract": paper.abstract,
+        "journal": paper.journal,
+        "accreditation": paper.accreditation,
         "page_count": paper.page_count,
         "uploaded_at": paper.cached_at.isoformat(),
     }
@@ -137,6 +141,8 @@ async def list_uploaded_papers(
             "authors": p.authors,
             "year": p.year,
             "abstract": p.abstract,
+            "journal": p.journal or "Uploaded PDF",
+            "accreditation": p.accreditation or "PDF Uploaded",
             "page_count": p.page_count,
             "uploaded_at": p.cached_at.isoformat(),
         }

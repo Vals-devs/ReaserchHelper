@@ -34,6 +34,8 @@ def parse_entry(entry: ET.Element) -> dict:
         "url": f"https://arxiv.org/abs/{arxiv_id}",
         "fields_of_study": categories,
         "citation_count": 0,
+        "journal": "arXiv Repository",
+        "accreditation": "arXiv Preprint",
     }
 
 

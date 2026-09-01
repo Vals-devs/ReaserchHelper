@@ -274,7 +274,9 @@ async def extract_paper_metadata(full_text: str, title_hint: str = "") -> dict:
         "- 'title': Judul lengkap paper ilmiah.\n"
         "- 'authors': Daftar nama penulis (array of strings).\n"
         "- 'year': Tahun publikasi (integer, atau null jika tidak ditemukan).\n"
-        "- 'abstract': Abstrak atau ringkasan 3-5 kalimat dari teks paper.\n\n"
+        "- 'abstract': Abstrak atau ringkasan 3-5 kalimat dari teks paper.\n"
+        "- 'journal': Nama jurnal, universitas, atau venue konferensi yang tertera.\n"
+        "- 'accreditation': Estimasi akreditasi jika tertera (contoh: 'Scopus Q1', 'Scopus Q2', 'Sinta 1', 'Sinta 2', atau 'PDF Uploaded').\n\n"
         "Berikan output HANYA dalam format JSON valid."
     )
 
@@ -293,12 +295,16 @@ async def extract_paper_metadata(full_text: str, title_hint: str = "") -> dict:
             "authors": parsed.get("authors", []),
             "year": parsed.get("year"),
             "abstract": parsed.get("abstract", ""),
+            "journal": parsed.get("journal", "Uploaded PDF Document"),
+            "accreditation": parsed.get("accreditation", "PDF Uploaded"),
         }
     return {
         "title": title_hint or "Untitled Paper",
         "authors": [],
         "year": None,
         "abstract": "",
+        "journal": "Uploaded PDF Document",
+        "accreditation": "PDF Uploaded",
     }
 
 

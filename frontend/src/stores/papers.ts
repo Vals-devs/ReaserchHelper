@@ -14,6 +14,8 @@ export interface Paper {
   url: string | null
   citation_count: number
   fields_of_study: string[]
+  journal?: string | null
+  accreditation?: string | null
 }
 
 export const usePapersStore = defineStore('papers', () => {

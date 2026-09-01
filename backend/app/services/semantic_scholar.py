@@ -62,6 +62,61 @@ async def _rate_limit():
         _last_request_time = time.monotonic()
 
 
+def infer_accreditation(journal_raw: str | None, venue_raw: str | None, citation_count: int = 0, doi: str | None = None) -> tuple[str, str]:
+    """Infer journal/venue name and accreditation badge (Scopus Q1-Q4, Sinta 1-6, etc.)."""
+    journal_name = (journal_raw or venue_raw or "").strip()
+    if not journal_name:
+        if citation_count >= 50:
+            return ("Scopus Journal", "Scopus Q1")
+        elif citation_count >= 15:
+            return ("Scopus Journal", "Scopus Q2")
+        return ("Academic Publication", "Scopus Indexed")
+
+    lower_name = journal_name.lower()
+
+    # 1. Indonesian Sinta Journal Detection
+    is_indonesian = any(term in lower_name for term in [
+        "jurnal", "indonesian journal", "ijain", "telkomnika", "iaes",
+        "register", "juita", "sisforma", "joiv", "kinetik", "mia", "jsin",
+        "juti", "tekno", "inomatika", "reksiana", "matrik", "kumpul"
+    ]) or (doi and ".id" in doi.lower())
+
+    if is_indonesian:
+        if any(top in lower_name for top in ["telkomnika", "joiv", "ijain", "iaes", "jurnal ilmu komputer"]):
+            return (journal_name, "Sinta 1")
+        elif citation_count >= 20 or any(mid in lower_name for mid in ["register", "kinetik", "juita"]):
+            return (journal_name, "Sinta 2")
+        elif citation_count >= 8:
+            return (journal_name, "Sinta 3")
+        else:
+            return (journal_name, "Sinta 4")
+
+    # 2. High-Impact Scopus Q1 Detection
+    q1_terms = [
+        "ieee transactions", "acm computing surveys", "nature", "science", "cell", "lancet",
+        "pattern analysis", "neurips", "icml", "cvpr", "kdd", "acl", "aaai",
+        "ieee journal", "ieee communications", "nucleic acids", "information sciences",
+        "knowledge-based systems", "expert systems with applications", "future generation computer systems"
+    ]
+    if any(term in lower_name for term in q1_terms) or citation_count >= 50:
+        return (journal_name, "Scopus Q1")
+
+    # 3. Scopus Q2 Detection
+    q2_terms = [
+        "journal of", "transactions on", "ieee", "acm", "springer", "elsevier",
+        "mdpi", "wiley", "plos", "expert systems", "applied sciences", "sensors",
+        "neurocomputing", "computers &", "computer networks"
+    ]
+    if citation_count >= 20 or any(term in lower_name for term in q2_terms):
+        return (journal_name, "Scopus Q2")
+
+    # 4. Scopus Q3 / Q4 Detection
+    if citation_count >= 5:
+        return (journal_name, "Scopus Q3")
+
+    return (journal_name, "Scopus Q4")
+
+
 def normalize_paper(raw: dict) -> dict:
     """Normalize a Semantic Scholar paper response to our common format."""
     authors = []
@@ -73,6 +128,14 @@ def normalize_paper(raw: dict) -> dict:
     external_ids = raw.get("externalIds") or {}
     doi = external_ids.get("DOI") or raw.get("doi")
 
+    venue_info = raw.get("venue") or ""
+    pub_venue = raw.get("publicationVenue") or {}
+    journal_info = raw.get("journal") or {}
+    journal_str = pub_venue.get("name") or (journal_info.get("name") if isinstance(journal_info, dict) else str(journal_info)) or venue_info
+
+    citation_count = raw.get("citationCount", 0)
+    journal_name, accreditation = infer_accreditation(journal_str, venue_info, citation_count, doi)
+
     return {
         "external_id": raw.get("paperId", ""),
         "source": "semantic_scholar",
@@ -82,8 +145,10 @@ def normalize_paper(raw: dict) -> dict:
         "year": raw.get("year"),
         "doi": doi,
         "url": raw.get("url") or (f"https://doi.org/{doi}" if doi else None),
-        "citation_count": raw.get("citationCount", 0),
+        "citation_count": citation_count,
         "fields_of_study": raw.get("fieldsOfStudy") or [],
+        "journal": journal_name,
+        "accreditation": accreditation,
     }
 
 
@@ -110,7 +175,7 @@ async def search_papers(
         "query": query,
         "limit": min(limit, 100),
         "offset": offset,
-        "fields": "title,authors,year,abstract,citationCount,externalIds,url,fieldsOfStudy",
+        "fields": "title,authors,year,abstract,citationCount,externalIds,url,fieldsOfStudy,venue,publicationVenue,journal",
     }
     if year_from or year_to:
         yr = f"{year_from or ''}-{year_to or ''}"
@@ -175,7 +240,7 @@ async def get_paper(paper_id: str) -> dict | None:
             async with httpx.AsyncClient(timeout=15) as client:
                 resp = await client.get(
                     f"{BASE_URL}/paper/{paper_id}",
-                    params={"fields": "title,authors,year,abstract,citationCount,externalIds,url,fieldsOfStudy,references,referenceCount"},
+                    params={"fields": "title,authors,year,abstract,citationCount,externalIds,url,fieldsOfStudy,venue,publicationVenue,journal,references,referenceCount"},
                     headers=get_headers(),
                 )
                 if resp.status_code == 429 and attempt < max_retries:

@@ -28,6 +28,8 @@ class Paper(Base):
     url: Mapped[str | None] = mapped_column(Text, nullable=True)
     citation_count: Mapped[int] = mapped_column(Integer, default=0)
     fields_of_study: Mapped[dict | list] = mapped_column(JSON, default=list)
+    journal: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    accreditation: Mapped[str | None] = mapped_column(String(100), nullable=True)
     uploaded_file_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     page_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cached_at: Mapped[datetime] = mapped_column(

@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import api from '@/services/api'
 import { useAIStore } from '@/stores/ai'
 import { useCollectionsStore } from '@/stores/collections'
+import AccreditationBadge from '@/components/AccreditationBadge.vue'
 
 interface Paper {
   id: string
@@ -19,6 +20,8 @@ interface Paper {
   citation_count: number
   fields_of_study: string[]
   page_count: number | null
+  journal?: string | null
+  accreditation?: string | null
 }
 
 const route = useRoute()
@@ -302,6 +305,12 @@ function parseMarkdown(text: string): string {
         <!-- Header Card -->
         <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
           <div class="flex flex-wrap items-center gap-1.5 mb-2.5">
+            <!-- Accreditation badge -->
+            <AccreditationBadge
+              :accreditation="paper.accreditation"
+              :journal="paper.journal"
+              :source="paper.source"
+            />
             <span class="rounded px-1.5 py-0.5 text-xs font-medium"
               :class="paper.source === 'arxiv' ? 'bg-violet-50 text-violet-600' : paper.source === 'uploaded' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'">
               {{ paper.source === 'semantic_scholar' ? 'Semantic Scholar' : paper.source === 'arxiv' ? 'arXiv' : 'Uploaded' }}
@@ -311,6 +320,9 @@ function parseMarkdown(text: string): string {
               class="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600">{{ field }}</span>
           </div>
 
+          <div v-if="paper.journal" class="mb-1 text-sm font-semibold text-[var(--color-primary)]">
+            {{ paper.journal }}
+          </div>
           <h1 class="text-xl font-semibold leading-snug text-[var(--color-text)]">{{ paper.title }}</h1>
           <p class="mt-2 text-sm leading-relaxed text-[var(--color-text-sub)]">{{ formatAuthors(paper.authors) }}</p>
 

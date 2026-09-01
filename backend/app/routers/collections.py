@@ -115,6 +115,8 @@ async def get_collection(
             "url": paper.url,
             "citation_count": paper.citation_count,
             "fields_of_study": paper.fields_of_study,
+            "journal": paper.journal,
+            "accreditation": paper.accreditation,
             "page_count": paper.page_count,
             "notes": cp.notes,
             "highlights": cp.highlights,

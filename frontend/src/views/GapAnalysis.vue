@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useUploadStore } from '@/stores/upload'
 import { useCollectionsStore, type CollectionPaper } from '@/stores/collections'
 import { useAIStore } from '@/stores/ai'
+import AccreditationBadge from '@/components/AccreditationBadge.vue'
 import api from '@/services/api'
 
 const uploadStore = useUploadStore()
@@ -514,7 +515,12 @@ function parseMarkdown(text: string): string {
               </svg>
             </div>
             <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-1.5 mb-0.5">
+              <div class="flex flex-wrap items-center gap-1.5 mb-1">
+                <AccreditationBadge
+                  :accreditation="paper.accreditation"
+                  :journal="paper.journal"
+                  :source="paper.source"
+                />
                 <span class="rounded px-1.5 py-0.5 text-[9px] font-medium"
                   :class="paper.source === 'uploaded' ? 'bg-emerald-50 text-emerald-600' : 'bg-violet-50 text-violet-600'">
                   {{ paper.source_label }}

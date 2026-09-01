@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCollectionsStore, type CollectionDetail, type CollectionPaper } from '@/stores/collections'
 import { useAIStore } from '@/stores/ai'
+import AccreditationBadge from '@/components/AccreditationBadge.vue'
 import api from '@/services/api'
 
 const route = useRoute()
@@ -207,7 +208,12 @@ function goBack() {
 
             <!-- Paper content -->
             <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-1.5 mb-0.5">
+              <div class="flex flex-wrap items-center gap-1.5 mb-1">
+                <AccreditationBadge
+                  :accreditation="paper.accreditation"
+                  :journal="paper.journal"
+                  :source="paper.source"
+                />
                 <span class="rounded px-1.5 py-0.5 text-[10px] font-medium"
                   :class="paper.source === 'arxiv' ? 'bg-violet-50 text-violet-600' : paper.source === 'uploaded' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'">
                   {{ paper.source === 'semantic_scholar' ? 'S2' : paper.source === 'arxiv' ? 'arXiv' : 'Upload' }}

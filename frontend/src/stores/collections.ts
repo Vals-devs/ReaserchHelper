@@ -24,6 +24,8 @@ export interface CollectionPaper {
   url: string | null
   citation_count: number
   fields_of_study: string[]
+  journal?: string | null
+  accreditation?: string | null
   page_count: number | null
   notes: string | null
   highlights: any[]
