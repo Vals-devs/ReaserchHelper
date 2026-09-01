@@ -1,0 +1,26 @@
+name: Deploy ResearchFinder
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Pull latest code on server
+        run: |
+          cd /home/ival/apps/research-finder
+          git fetch origin
+          git reset --hard origin/main
+
+      - name: Rebuild and restart containers
+        run: |
+          cd /home/ival/apps/research-finder
+          docker compose -f docker-compose.prod.yml up -d --build
+
+      - name: Clean unused docker resources
+        run: |
+          docker system prune -f
