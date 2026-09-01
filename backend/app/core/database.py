@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from sqlalchemy import text
 from app.core.config import settings
 
 # SQLite needs check_same_thread=False for async usage
@@ -45,7 +46,15 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def create_tables():
-    """Create all tables (for SQLite dev mode only)."""
+    """Create all tables and ensure new columns exist on existing databases."""
     from app.models import Base  # noqa: F401
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        for stmt in [
+            "ALTER TABLE papers ADD COLUMN IF NOT EXISTS journal VARCHAR(255);",
+            "ALTER TABLE papers ADD COLUMN IF NOT EXISTS accreditation VARCHAR(100);",
+        ]:
+            try:
+                await conn.execute(text(stmt))
+            except Exception:
+                pass

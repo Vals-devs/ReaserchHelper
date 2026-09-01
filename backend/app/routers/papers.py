@@ -184,7 +184,7 @@ async def search_papers(
 
         # Add IDs from DB cache to results
         result_with_ids = []
-        for i, paper in enumerate(merged):
+        for paper in merged:
             try:
                 result_obj = await db.execute(
                     select(Paper).where(
@@ -193,9 +193,9 @@ async def search_papers(
                     )
                 )
                 cached = result_obj.scalar_one_or_none()
-                paper_with_id = {**paper, "id": cached.id if cached else f"temp_{i}"}
+                paper_with_id = {**paper, "id": cached.id if cached else paper["external_id"]}
             except Exception:
-                paper_with_id = {**paper, "id": f"temp_{i}"}
+                paper_with_id = {**paper, "id": paper["external_id"]}
             result_with_ids.append(paper_with_id)
 
         response = {
@@ -225,10 +225,42 @@ async def get_paper(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Get paper details - from DB cache or external API."""
-    # Try DB cache first
+    """Get paper details - from DB cache, by external ID, or via external API fallback."""
+    import uuid
+
+    # 1. Try DB lookup by UUID primary key
     result = await db.execute(select(Paper).where(Paper.id == paper_id))
     paper = result.scalar_one_or_none()
+
+    # 2. If not found by primary key, try DB lookup by external_id
+    if not paper:
+        result = await db.execute(select(Paper).where(Paper.external_id == paper_id))
+        paper = result.scalar_one_or_none()
+
+    # 3. If still not found in DB, fetch from Semantic Scholar API
+    if not paper and not paper_id.startswith("temp_"):
+        external_paper = await s2_service.get_paper(paper_id)
+        if external_paper:
+            try:
+                paper = await _cache_paper(db, external_paper)
+            except Exception as e:
+                logger.warning(f"Failed to cache fetched paper {paper_id}: {e}")
+                # Transient fallback paper object
+                paper = Paper(
+                    id=str(uuid.uuid4()),
+                    external_id=external_paper["external_id"],
+                    source=external_paper["source"],
+                    title=external_paper["title"],
+                    authors=external_paper.get("authors", []),
+                    abstract=external_paper.get("abstract"),
+                    year=external_paper.get("year"),
+                    doi=external_paper.get("doi"),
+                    url=external_paper.get("url"),
+                    citation_count=external_paper.get("citation_count", 0),
+                    fields_of_study=external_paper.get("fields_of_study", []),
+                    journal=external_paper.get("journal"),
+                    accreditation=external_paper.get("accreditation"),
+                )
 
     if paper:
         return {
