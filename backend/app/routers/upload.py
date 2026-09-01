@@ -13,7 +13,7 @@ from app.core.security import get_current_user
 from app.models.user import User
 from app.models.paper import Paper
 from app.services.pdf_parser import extract_text_from_pdf
-from app.services import groq as groq_service
+from app.services import gemini as ai_service
 
 router = APIRouter()
 
@@ -62,7 +62,7 @@ async def upload_pdf(
         f.write(file_bytes)
 
     # Use AI to extract metadata
-    metadata = await groq_service.extract_paper_metadata(
+    metadata = await ai_service.extract_paper_metadata(
         pdf_data["full_text"],
         title_hint=pdf_data["title_hint"],
     )

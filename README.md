@@ -83,7 +83,7 @@ Semua pencarian tersimpan otomatis. Klik "Cari Lagi" untuk mengulang pencarian s
 | **Backend** | FastAPI (Python 3.10+), SQLAlchemy, Pydantic |
 | **Database** | SQLite (dev) / PostgreSQL (production) |
 | **Cache** | Redis |
-| **AI** | Groq API (LLaMA 3.1 8B + LLaMA 3.3 70B) |
+| **AI** | Google Gemini API (Gemini 2.5 Flash) |
 | **Paper API** | Semantic Scholar, arXiv |
 | **PDF** | PyMuPDF |
 | **Deployment** | Docker Compose, Nginx |
@@ -96,7 +96,7 @@ Semua pencarian tersimpan otomatis. Klik "Cari Lagi" untuk mengulang pencarian s
 
 - **Python** 3.10+
 - **Node.js** 20+
-- **Groq API Key** — Daftar gratis di [console.groq.com](https://console.groq.com)
+- **Gemini API Key** — Daftar gratis di [aistudio.google.com](https://aistudio.google.com/)
 - **Semantic Scholar API Key** — Daftar gratis di [semanticscholar.org](https://www.semanticscholar.org/product/api#api-key-form)
 
 ### 1. Clone Repository
@@ -127,12 +127,17 @@ Edit `backend/.env` dan isi API key:
 ```env
 SECRET_KEY=ganti-dengan-random-string
 DATABASE_URL=sqlite+aiosqlite:///./researchfinder.db
-GROQ_API_KEY=gsk_xxxxx
+GEMINI_API_KEY=AIzaSy_xxxxx
+GEMINI_MODEL=gemini-2.5-flash
 SEMANTIC_SCHOLAR_API_KEY=s2k-xxxxx
 ```
 
 Jalankan backend:
 ```bash
+# Di Linux/Mac:
+python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+# Di Windows (atau jika venv aktif):
 python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 

@@ -8,7 +8,7 @@ from app.core.security import get_current_user
 from app.core.database import get_db
 from app.models.user import User
 from app.models.paper import Paper
-from app.services import groq as groq_service
+from app.services import gemini as ai_service
 
 router = APIRouter()
 
@@ -50,7 +50,7 @@ async def summarize_paper(
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
 
-    summary = await groq_service.summarize_paper(paper.title, paper.abstract or "")
+    summary = await ai_service.summarize_paper(paper.title, paper.abstract or "")
     return {"paper_id": data.paper_id, "summary": summary}
 
 
@@ -60,7 +60,7 @@ async def translate_abstract(
     current_user: User = Depends(get_current_user),
 ):
     """Translate text to target language."""
-    translation = await groq_service.translate_text(data.text, data.target_language)
+    translation = await ai_service.translate_text(data.text, data.target_language)
     return {"translation": translation}
 
 
@@ -70,7 +70,7 @@ async def explain_text(
     current_user: User = Depends(get_current_user),
 ):
     """Explain text in plain language."""
-    explanation = await groq_service.explain_text(data.text, data.language)
+    explanation = await ai_service.explain_text(data.text, data.language)
     return {"explanation": explanation}
 
 
@@ -93,14 +93,14 @@ async def gap_analysis(
         {
             "title": p.title,
             "abstract": p.abstract or "N/A",
-            "full_text": p.full_text,  # Preferred by Groq for uploaded papers
+            "full_text": p.full_text,  # Preferred for uploaded papers
         }
         for p in papers
     ]
-    gaps = await groq_service.gap_analysis(papers_data)
+    gaps = await ai_service.gap_analysis(papers_data)
 
-    # Check if Groq returned an error string
-    if isinstance(gaps, dict) and gaps.get("raw_response", "").startswith("[Groq"):
+    # Check if Gemini returned an error string
+    if isinstance(gaps, dict) and gaps.get("raw_response", "").startswith("[Gemini"):
         raise HTTPException(status_code=502, detail=gaps["raw_response"])
 
     return {"gaps": gaps}
@@ -118,7 +118,7 @@ async def suggest_related(
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
 
-    keywords = await groq_service.extract_keywords(paper.abstract or "")
+    keywords = await ai_service.extract_keywords(paper.abstract or "")
 
     # Search Semantic Scholar with extracted keywords
     from app.services import semantic_scholar as s2_service
@@ -210,9 +210,8 @@ Konteks Dokumen Paper:
         formatted_messages.append({"role": msg.role, "content": msg.content})
 
     try:
-        reply = await groq_service.chat_completion(
+        reply = await ai_service.chat_completion(
             messages=formatted_messages,
-            model=groq_service.MODEL_DEFAULT,
             temperature=0.3,
             max_tokens=1000
         )
@@ -272,9 +271,8 @@ Jawablah dalam bahasa Indonesia (atau gunakan bahasa Inggris jika mereka bertany
         formatted_messages.append({"role": msg.role, "content": msg.content})
 
     try:
-        reply = await groq_service.chat_completion(
+        reply = await ai_service.chat_completion(
             messages=formatted_messages,
-            model=groq_service.MODEL_LONG,
             temperature=0.4,
             max_tokens=1000
         )

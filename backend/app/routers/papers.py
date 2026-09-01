@@ -270,10 +270,10 @@ async def get_related_papers(
             cached = await _cache_paper(db, rec)
             related.append({**rec, "id": cached.id})
 
-    # Fallback: use Groq keyword extraction + S2 search
+    # Fallback: use Gemini keyword extraction + S2 search
     if not related and paper.abstract:
-        from app.services import groq as groq_service
-        keywords = await groq_service.extract_keywords(paper.abstract)
+        from app.services import gemini as ai_service
+        keywords = await ai_service.extract_keywords(paper.abstract)
         if keywords:
             query = " ".join(keywords[:3]) if isinstance(keywords, list) else str(keywords)
             search_result = await s2_service.search_papers(query=query, limit=10)

@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     REDIS_ENABLED: bool = True
 
     # External APIs
-    GROQ_API_KEY: str = ""
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.5-flash"
     SEMANTIC_SCHOLAR_API_KEY: str = ""
     UNPAYWALL_EMAIL: str = ""
 
@@ -39,6 +40,7 @@ class Settings(BaseSettings):
         "env_file": ".env",
         "env_file_encoding": "utf-8",
         "case_sensitive": True,
+        "extra": "ignore",
     }
 
 
