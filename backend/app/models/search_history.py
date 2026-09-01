@@ -22,7 +22,7 @@ class SearchHistory(Base):
     filters: Mapped[dict | list] = mapped_column(JSON, default=dict)
     result_count: Mapped[int] = mapped_column(Integer, default=0)
     searched_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
 
     # Relationships

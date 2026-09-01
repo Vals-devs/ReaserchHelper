@@ -161,19 +161,21 @@ async def search_papers(
     # Cache papers in DB
     for paper_data in merged[:50]:  # Cache up to 50 per search
         try:
-            await _cache_paper(db, paper_data)
+            async with db.begin_nested():
+                await _cache_paper(db, paper_data)
         except Exception as e:
             logger.warning(f"Failed to cache paper: {e}")
 
     # Save search history
     try:
-        history = SearchHistory(
-            user_id=current_user.id,
-            query=q,
-            filters={"source": source, "year_from": year_from, "year_to": year_to, "field": field},
-            result_count=len(merged),
-        )
-        db.add(history)
+        async with db.begin_nested():
+            history = SearchHistory(
+                user_id=current_user.id,
+                query=q,
+                filters={"source": source, "year_from": year_from, "year_to": year_to, "field": field},
+                result_count=len(merged),
+            )
+            db.add(history)
     except Exception as e:
         logger.warning(f"Failed to save search history: {e}")
 

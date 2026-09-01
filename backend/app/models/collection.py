@@ -22,7 +22,7 @@ class Collection(Base):
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_public: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
 
     # Relationships
@@ -45,7 +45,7 @@ class CollectionPaper(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     highlights: Mapped[dict | list] = mapped_column(JSON, default=list)
     added_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
 
     # Relationships

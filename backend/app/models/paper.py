@@ -31,7 +31,7 @@ class Paper(Base):
     uploaded_file_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     page_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cached_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
 
     # Relationships
@@ -51,7 +51,7 @@ class AISummary(Base):
     key_findings: Mapped[dict | list] = mapped_column(JSON, default=list)
     methodology: Mapped[str | None] = mapped_column(Text, nullable=True)
     generated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=lambda: datetime.now(timezone.utc)
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
 
     # Relationships
