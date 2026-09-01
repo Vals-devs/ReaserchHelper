@@ -17,7 +17,7 @@ class Settings(BaseSettings):
 
     # Redis (optional for local dev, required for Docker/production)
     REDIS_URL: str = ""
-    REDIS_ENABLED: bool = False
+    REDIS_ENABLED: bool = True
 
     # External APIs
     GROQ_API_KEY: str = ""
@@ -30,6 +30,9 @@ class Settings(BaseSettings):
         "http://localhost:5174",
         "http://localhost:80",
         "http://localhost",
+        "https://research.ivalpermana.my.id",
+        "http://research.ivalpermana.my.id",
+        "*",
     ]
 
     model_config = {

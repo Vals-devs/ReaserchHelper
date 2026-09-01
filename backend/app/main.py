@@ -18,15 +18,14 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events."""
-    # Startup
-    _is_sqlite = settings.DATABASE_URL.startswith("sqlite")
-    if _is_sqlite:
-        logger.info("SQLite mode: creating tables...")
-        await create_tables()
-        logger.info("SQLite tables ready")
+    # Startup — ensure all database tables are created (PostgreSQL & SQLite)
+    logger.info("Initializing database tables...")
+    await create_tables()
+    logger.info("Database tables ready")
 
     await init_redis()
 
+    _is_sqlite = settings.DATABASE_URL.startswith("sqlite")
     logger.info(f"ResearchFinder API started (DB: {'SQLite' if _is_sqlite else 'PostgreSQL'})")
     yield
     # Shutdown
