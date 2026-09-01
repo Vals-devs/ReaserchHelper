@@ -138,6 +138,8 @@ async def generate_content(
                     continue
                 error_body = e.response.text[:300] if e.response else "unknown"
                 logger.error(f"Gemini API error ({e.response.status_code}): {error_body}")
+                if e.response.status_code in (400, 403):
+                    return f"[Gemini API key tidak valid / ditolak: {error_body}]"
                 return f"[Gemini API error: {e.response.status_code}]"
             except Exception as e:
                 if attempt < max_retries:
@@ -320,32 +322,25 @@ async def extract_paper_metadata(full_text: str, title_hint: str = "") -> dict:
 
 
 async def gap_analysis(papers: list[dict]) -> dict:
-    """Analyze research gaps across multiple papers."""
+    """Analyze research gaps across multiple papers with fast execution."""
     papers_text_parts = []
     for i, p in enumerate(papers):
-        content = p.get("full_text") or p.get("abstract", "N/A")
-        if len(content) > MAX_CHARS_PER_PAPER:
-            content = content[:MAX_CHARS_PER_PAPER] + "... [truncated]"
+        # Truncate content to 1500 chars per paper for fast processing
+        content = p.get("abstract") or p.get("full_text", "N/A") or "N/A"
+        if len(content) > 1500:
+            content = content[:1500] + "... [truncated]"
         papers_text_parts.append(f"=== Paper {i+1}: {p.get('title', 'Untitled')} ===\n{content}")
 
     papers_text = "\n\n".join(papers_text_parts)
 
-    if len(papers_text) > MAX_TOTAL_CHARS:
-        papers_text_parts = []
-        for i, p in enumerate(papers):
-            abstract = p.get("abstract", "N/A") or "N/A"
-            if len(abstract) > 1000:
-                abstract = abstract[:1000] + "..."
-            papers_text_parts.append(f"=== Paper {i+1}: {p.get('title', 'Untitled')} ===\n{abstract}")
-        papers_text = "\n\n".join(papers_text_parts)
-
     system_prompt = (
-        "Kamu adalah seorang profesor dan peneliti berpengalaman. "
-        "Analisis paper-paper berikut dan identifikasi research gap dalam format JSON valid dengan struktur:\n"
+        "Kamu adalah profesor dan peneliti senior. "
+        "Analisis paper-paper berikut dan identifikasi research gap secara ringkas dan padat. "
+        "Selalu berikan output HANYA dalam format JSON valid dengan struktur:\n"
         "{\n"
-        '  "topik_dominan": [{"name": "nama topik", "count": 1, "desc": "deskripsi"}],\n'
-        '  "metodologi": [{"name": "nama metode", "freq": "Sering/Sedang/Jarang", "desc": "deskripsi"}],\n'
-        '  "celah_penelitian": [{"title": "judul celah", "desc": "penjelasan detail", "priority": "Tinggi/Sedang"}],\n'
+        '  "topik_dominan": [{"name": "nama topik", "count": 1, "desc": "deskripsi singkat"}],\n'
+        '  "metodologi": [{"name": "nama metode", "freq": "Sering/Sedang/Jarang", "desc": "deskripsi singkat"}],\n'
+        '  "celah_penelitian": [{"title": "judul celah", "desc": "penjelasan ringkas", "priority": "Tinggi/Sedang"}],\n'
         '  "saran_topik": ["saran topik 1", "saran topik 2"]\n'
         "}"
     )
@@ -353,8 +348,8 @@ async def gap_analysis(papers: list[dict]) -> dict:
     result = await generate_content(
         prompt=papers_text,
         system_instruction=system_prompt,
-        temperature=0.4,
-        max_tokens=3000,
+        temperature=0.2,
+        max_tokens=1500,
         json_output=True,
     )
     parsed = _parse_json_response(result)
