@@ -1,26 +1,63 @@
-name: Deploy ResearchFinder
+name: ResearchFinder CI/CD Pipeline
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
+  # STAGE 1: CONTINUOUS INTEGRATION (Build & Code Verification)
+  test-and-build:
+    name: 🧪 CI - Verify & Build Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Frontend Dependencies & Build Test
+        run: |
+          cd frontend
+          npm ci
+          npx vite build
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Verify Backend Code Syntax
+        run: |
+          cd backend
+          python -m py_compile app/main.py app/core/config.py app/services/gemini.py app/services/semantic_scholar.py app/routers/papers.py
+
+  # STAGE 2: CONTINUOUS DEPLOYMENT (Auto Deploy to VPS)
   deploy:
+    name: 🚀 CD - Deploy to Production VPS
+    needs: test-and-build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: self-hosted
 
     steps:
-      - name: Pull latest code on server
+      - name: Pull Latest Code
         run: |
           cd /home/ival/apps/research-finder
           git fetch origin
           git reset --hard origin/main
 
-      - name: Rebuild and restart containers
+      - name: Rebuild & Restart Docker Production Containers
         run: |
           cd /home/ival/apps/research-finder
           docker compose -f docker-compose.prod.yml up -d --build
 
-      - name: Clean unused docker resources
+      - name: Cleanup Unused Docker Images
         run: |
-          docker system prune -f
+          docker image prune -f
