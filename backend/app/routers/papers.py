@@ -14,6 +14,7 @@ from app.models.paper import Paper
 from app.models.search_history import SearchHistory
 from app.services import semantic_scholar as s2_service
 from app.services import arxiv as arxiv_service
+from app.services import openalex as openalex_service
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,10 @@ async def _noop_s2():
 
 
 async def _noop_arxiv():
+    return []
+
+
+async def _noop_openalex():
     return []
 
 
@@ -76,33 +81,26 @@ async def _bg_cache_search_results(user_id: str, q: str, filters: dict, papers: 
         logger.warning(f"Background caching failed: {e}")
 
 
-def _merge_results(s2_results: list[dict], arxiv_results: list[dict]) -> list[dict]:
-    """Merge and deduplicate results from both sources."""
+def _merge_results(s2_results: list[dict], openalex_results: list[dict], arxiv_results: list[dict]) -> list[dict]:
+    """Merge and deduplicate results from Semantic Scholar, OpenAlex, and arXiv."""
     seen_doi: set[str] = set()
     seen_titles: set[str] = set()
     merged: list[dict] = []
 
-    # Add Semantic Scholar results first (they have citation data)
-    for paper in s2_results:
-        title_key = paper["title"].lower().strip()[:80]
-        doi = paper.get("doi")
-        if doi:
-            seen_doi.add(doi.lower())
-        seen_titles.add(title_key)
-        merged.append(paper)
-
-    # Add arXiv results, skipping duplicates
-    for paper in arxiv_results:
-        title_key = paper["title"].lower().strip()[:80]
-        doi = paper.get("doi")
-        if doi and doi.lower() in seen_doi:
-            continue
-        if title_key in seen_titles:
-            continue
-        if doi:
-            seen_doi.add(doi.lower())
-        seen_titles.add(title_key)
-        merged.append(paper)
+    for source_list in [s2_results, openalex_results, arxiv_results]:
+        for paper in source_list:
+            title_key = paper.get("title", "").lower().strip()[:80]
+            if not title_key:
+                continue
+            doi = paper.get("doi")
+            if doi and doi.lower() in seen_doi:
+                continue
+            if title_key in seen_titles:
+                continue
+            if doi:
+                seen_doi.add(doi.lower())
+            seen_titles.add(title_key)
+            merged.append(paper)
 
     return merged
 
@@ -147,7 +145,7 @@ async def _cache_paper(db: AsyncSession, paper_data: dict) -> Paper:
 async def search_papers(
     background_tasks: BackgroundTasks,
     q: str = Query(..., min_length=1, description="Search query"),
-    source: str = Query("all", description="Source: all, semantic_scholar, arxiv"),
+    source: str = Query("all", description="Source: all, semantic_scholar, openalex, arxiv"),
     year_from: int | None = Query(None, description="Filter: year from"),
     year_to: int | None = Query(None, description="Filter: year to"),
     field: str | None = Query(None, description="Filter: field of study"),
@@ -156,13 +154,14 @@ async def search_papers(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Search papers from Semantic Scholar and/or arXiv concurrently."""
+    """Search papers from Semantic Scholar, OpenAlex, and arXiv concurrently."""
     try:
         errors: list[str] = []
         s2_results: list[dict] = []
+        openalex_results: list[dict] = []
         arxiv_results: list[dict] = []
 
-        # Fetch from both sources concurrently
+        # Fetch from all sources concurrently
         tasks = []
 
         if source in ("all", "semantic_scholar"):
@@ -178,6 +177,11 @@ async def search_papers(
             )
         else:
             tasks.append(_noop_s2())
+
+        if source in ("all", "openalex"):
+            tasks.append(openalex_service.search_papers(query=q, limit=limit))
+        else:
+            tasks.append(_noop_openalex())
 
         if source in ("all", "arxiv"):
             tasks.append(arxiv_service.search_papers(query=q, max_results=limit, start=offset))
@@ -196,8 +200,15 @@ async def search_papers(
                 if s2_data.get("error"):
                     errors.append(s2_data["error"])
 
+            # Process OpenAlex results
+            oa_data = results[1]
+            if isinstance(oa_data, Exception):
+                errors.append(f"OpenAlex: {oa_data}")
+            elif isinstance(oa_data, list):
+                openalex_results = oa_data
+
             # Process arXiv results
-            arxiv_data = results[1]
+            arxiv_data = results[2]
             if isinstance(arxiv_data, Exception):
                 errors.append(f"arXiv: {arxiv_data}")
             elif isinstance(arxiv_data, list):
@@ -208,7 +219,7 @@ async def search_papers(
             errors.append(str(e))
 
         # Merge and deduplicate
-        merged = _merge_results(s2_results, arxiv_results)
+        merged = _merge_results(s2_results, openalex_results, arxiv_results)
 
         # Assign external_id as default ID instantly
         result_with_ids = [{**p, "id": p["external_id"]} for p in merged]
