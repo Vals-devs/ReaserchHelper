@@ -43,6 +43,14 @@
                 </li>
               </ul>
             </div>
+            <button
+              v-if="authStore.user?.plan_tier === 'pro'"
+              @click="handleDowngrade"
+              :disabled="upgrading"
+              class="mt-5 w-full py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold text-xs rounded-xl transition cursor-pointer"
+            >
+              Kembali ke Paket Gratis (100 MB)
+            </button>
           </div>
 
           <!-- Pro Plan -->
@@ -77,7 +85,7 @@
               :disabled="upgrading"
               class="mt-5 w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-sm rounded-xl transition shadow-lg shadow-amber-500/20 disabled:opacity-50 cursor-pointer"
             >
-              {{ upgrading ? 'Memproses Upgrade...' : 'Upgrade Sekarang (Rp 29.000/bln)' }}
+              {{ authStore.user?.plan_tier === 'pro' ? 'Akun Anda Saat Ini (Pro)' : (upgrading ? 'Memproses Upgrade...' : 'Upgrade Sekarang (Rp 29.000/bln)') }}
             </button>
           </div>
         </div>
@@ -106,6 +114,22 @@ async function handleUpgrade() {
   } catch (err) {
     console.error('Failed to upgrade:', err)
     alert('Gagal memproses upgrade. Silakan coba lagi.')
+  } finally {
+    upgrading.value = false
+  }
+}
+
+async function handleDowngrade() {
+  upgrading.value = true
+  try {
+    const { data } = await api.post('/auth/downgrade-free')
+    authStore.user = data
+    emit('upgraded')
+    emit('close')
+    alert('Akun Anda telah dikembalikan ke Paket Gratis (Kuota 100 MB).')
+  } catch (err) {
+    console.error('Failed to downgrade:', err)
+    alert('Gagal memproses downgrade.')
   } finally {
     upgrading.value = false
   }

@@ -96,3 +96,16 @@ async def upgrade_to_pro(
     await db.flush()
     await db.refresh(current_user)
     return UserResponse.model_validate(current_user)
+
+
+@router.post("/downgrade-free", response_model=UserResponse)
+async def downgrade_to_free(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Downgrade user plan back to Free Tier (100 MB Storage)."""
+    current_user.plan_tier = "free"
+    current_user.storage_quota_bytes = 104857600  # 100 MB
+    await db.flush()
+    await db.refresh(current_user)
+    return UserResponse.model_validate(current_user)
