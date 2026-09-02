@@ -86,24 +86,25 @@
               </div>
 
               <button
-                @click="step = 'confirm'"
-                class="mt-5 w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-sm rounded-xl transition shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2"
+                @click="payWithMidtrans"
+                :disabled="upgrading"
+                class="mt-5 w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-sm rounded-xl transition shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                <span>Bayar via QRIS (Rp 29.000)</span>
-                <span>→</span>
+                <span>{{ upgrading ? 'Memproses Midtrans...' : 'Bayar via Midtrans Gateway' }}</span>
+                <span v-if="!upgrading">→</span>
               </button>
             </div>
           </div>
         </div>
 
-        <!-- STEP 2: REAL QRIS PAYMENT & CONFIRMATION -->
+        <!-- STEP 2: REAL QRIS & MANUAL BACKUP PAYMENT -->
         <div v-else-if="step === 'confirm'" class="p-6">
           <div class="flex items-center gap-3 pb-3 mb-4 border-b border-slate-800">
             <button @click="step = 'select'" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer">
               ← Kembali
             </button>
             <div>
-              <h3 class="text-lg font-bold text-white">Pembayaran QRIS All Payment</h3>
+              <h3 class="text-lg font-bold text-white">Pembayaran QRIS Toko Arkan</h3>
               <p class="text-xs text-slate-400">Scan QRIS menggunakan GoPay, DANA, OVO, ShopeePay, atau M-Banking</p>
             </div>
           </div>
@@ -135,17 +136,6 @@
             <p class="text-[9px] text-slate-500">Satu QRIS Untuk Semua Pembayaran</p>
           </div>
 
-          <!-- Sender Name Input (Optional) -->
-          <div class="mb-4">
-            <label class="block text-xs font-medium text-slate-300 mb-1">Nama Pengirim / Catatan (Opsional):</label>
-            <input
-              v-model="senderName"
-              type="text"
-              placeholder="Contoh: Ival Permana"
-              class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-            />
-          </div>
-
           <div class="flex gap-3">
             <button
               @click="step = 'select'"
@@ -175,24 +165,56 @@ import { useAuthStore } from '@/stores/auth'
 const emit = defineEmits(['close', 'upgraded'])
 const authStore = useAuthStore()
 const step = ref<'select' | 'confirm'>('select')
-const senderName = ref('')
 const upgrading = ref(false)
+
+async function payWithMidtrans() {
+  upgrading.value = true
+  try {
+    const { data } = await api.post('/payment/create-midtrans-snap')
+    const token = data.token
+
+    if (window.snap && token && !token.startsWith('snap_mock_')) {
+      window.snap.pay(token, {
+        onSuccess: async function () {
+          await confirmDirectPayment()
+        },
+        onPending: async function () {
+          alert('Pembayaran Anda sedang diproses. Silakan selesaikan pembayaran.')
+        },
+        onError: function () {
+          alert('Pembayaran gagal atau dibatalkan.')
+        },
+        onClose: function () {
+          step.value = 'confirm'
+        }
+      })
+    } else {
+      // Direct Fallback to QRIS confirm screen
+      step.value = 'confirm'
+    }
+  } catch (err) {
+    console.error('Failed to create Midtrans Snap:', err)
+    step.value = 'confirm'
+  } finally {
+    upgrading.value = false
+  }
+}
 
 async function confirmDirectPayment() {
   upgrading.value = true
   try {
     const { data } = await api.post('/payment/confirm-direct', null, {
       params: {
-        method: 'QRIS',
-        sender_name: senderName.value || authStore.user?.name || ''
+        method: 'MIDTRANS_OR_QRIS',
+        sender_name: authStore.user?.name || ''
       }
     })
     authStore.user = { ...authStore.user, plan_tier: 'pro', storage_quota_bytes: data.storage_quota_bytes }
     emit('upgraded')
     emit('close')
-    alert('🎉 Terima Kasih! Pembayaran QRIS Anda telah berhasil dikonfirmasi! Akun Anda kini resmi aktif di Paket Pro Student (Kuota 5 GB)!')
+    alert('🎉 Terima Kasih! Pembayaran Anda telah berhasil diproses! Akun Anda kini resmi aktif di Paket Pro Student (Kuota 5 GB)!')
   } catch (err) {
-    console.error('Failed to confirm direct payment:', err)
+    console.error('Failed to confirm payment:', err)
     alert('Gagal memproses konfirmasi. Silakan coba lagi.')
   } finally {
     upgrading.value = false
