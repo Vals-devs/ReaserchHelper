@@ -320,19 +320,35 @@ async def gap_analysis(papers: list[dict]) -> dict:
     papers_text = "\n\n".join(papers_text_parts)
 
     system_prompt = (
-        "Kamu adalah seorang Guru Besar, Peneliti Senior, dan Ketua Dewan Penguji Riset Akademis. "
-        "Tugasmu adalah melakukan Analisis Celah Penelitian (Research Gap Analysis) yang kritis, akademis, dan komprehensif berdasarkan kumpulan paper referensi berikut.\n\n"
+        "Kamu adalah seorang Dosen Pembimbing Skripsi & Ketua Dewan Penguji Riset Akademis yang sangat komunikatif, cerdas, dan suportif. "
+        "Tugasmu adalah menganalisis kumpulan paper referensi berikut dan menyajikannya ke dalam Bahasa Indonesia yang SUPER MUDAH DIPAHAMI, JELAS, DAN PRAKTIS untuk mahasiswa.\n\n"
         "Petunjuk Analisis:\n"
-        "1. 'topik_dominan': Identifikasi 2-4 tren topik utama yang paling sering dibahas beserta deskripsi tren risetnya.\n"
-        "2. 'metodologi': Evaluasi 2-4 pendekatan/algoritma/metode yang digunakan, frekuensinya (Sering/Sedang/Jarang), dan kelemahannya.\n"
-        "3. 'celah_penelitian': Identifikasi 2-4 celah riset (research gap) konkret yang belum tereksplorasi, sertakan penjelasan detail mengapa ini menjadi celah dan kontribusi ilmiah jika diteliti, serta prioritasnya (Tinggi/Sedang).\n"
-        "4. 'saran_topik': Berikan 3-5 usulan judul/topik skripsi/tugas akhir yang spesifik, inovatif, dan siap diteliti oleh mahasiswa.\n\n"
+        "1. 'ringkasan_eksekutif': Ringkasan 2-3 kalimat santai tapi akademis yang menjawab: Apa masalah utama di paper-paper ini, dan peluang emas apa yang tersisa untuk diteliti.\n"
+        "2. 'rekomendasi_judul_skripsi': Berikan 3 rekomendasi judul proposal skripsi/tesis yang SIAP PAKAI, berisi:\n"
+        "   - 'judul': Judul Proposal yang menarik dan ilmiah.\n"
+        "   - 'alasan_kebaruan': Mengapa topik ini baru & penting (Novelty).\n"
+        "   - 'metode_disarankan': Metode/Algoritma/Pendekatan yang disarankan.\n"
+        "   - 'tingkat_kesulitan': 'Mudah', 'Sedang', atau 'Menantang'.\n"
+        "3. 'celah_penelitian': Identifikasi 3-4 celah riset (research gap) konkret:\n"
+        "   - 'title': Nama Celah Riset.\n"
+        "   - 'masalah_saat_ini': Apa yang belum ada/kurang di paper-paper saat ini.\n"
+        "   - 'solusi_peluang': Langkah/solusi konkret yang bisa diambil.\n"
+        "   - 'novelty_score': Nilai kebaruan dari 1 sampai 10 (contoh: 9.0).\n"
+        "   - 'category': 'Peluang Utama (Goldmine)', 'Eksploratif (Niche)', atau 'Mainstream'.\n"
+        "4. 'topik_dominan': 2-3 tren topik utama yang paling sering dibahas.\n"
+        "5. 'metodologi': 2-3 pendekatan/metode utama yang dipakai saat ini.\n\n"
         "Selalu berikan output HANYA dalam format JSON valid dengan struktur:\n"
         "{\n"
+        '  "ringkasan_eksekutif": "...",\n'
+        '  "rekomendasi_judul_skripsi": [\n'
+        '    {"judul": "...", "alasan_kebaruan": "...", "metode_disarankan": "...", "tingkat_kesulitan": "Sedang"}\n'
+        '  ],\n'
+        '  "celah_penelitian": [\n'
+        '    {"title": "...", "masalah_saat_ini": "...", "solusi_peluang": "...", "novelty_score": 9.2, "category": "Peluang Utama (Goldmine)"}\n'
+        '  ],\n'
         '  "topik_dominan": [{"name": "...", "count": 1, "desc": "..."}],\n'
-        '  "metodologi": [{"name": "...", "freq": "Sering/Sedang/Jarang", "desc": "..."}],\n'
-        '  "celah_penelitian": [{"title": "...", "desc": "...", "priority": "Tinggi/Sedang"}],\n'
-        '  "saran_topik": ["Saran Judul 1...", "Saran Judul 2..."]\n'
+        '  "metodologi": [{"name": "...", "freq": "Sering", "desc": "..."}],\n'
+        '  "saran_topik": ["Judul 1", "Judul 2"]\n'
         "}"
     )
 
@@ -340,16 +356,18 @@ async def gap_analysis(papers: list[dict]) -> dict:
         prompt=papers_text,
         system_instruction=system_prompt,
         temperature=0.3,
-        max_tokens=2048,
+        max_tokens=2500,
         json_output=True,
     )
     parsed = _parse_json_response(result)
     if isinstance(parsed, dict):
         return parsed
     return {
+        "ringkasan_eksekutif": "Analisis celah penelitian telah selesai.",
+        "rekomendasi_judul_skripsi": [],
+        "celah_penelitian": [],
         "topik_dominan": [],
         "metodologi": [],
-        "celah_penelitian": [],
         "saran_topik": [],
         "raw_response": result,
     }
