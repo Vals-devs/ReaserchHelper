@@ -86,11 +86,12 @@
               </div>
 
               <button
-                @click="step = 'payment'"
-                class="mt-5 w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-sm rounded-xl transition shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2"
+                @click="startCheckout"
+                :disabled="loadingCheckout"
+                class="mt-5 w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-sm rounded-xl transition shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                <span>Pilih Metode Pembayaran</span>
-                <span>→</span>
+                <span>{{ loadingCheckout ? 'Membuat Invoice Mayar.id...' : 'Pilih Metode Pembayaran' }}</span>
+                <span v-if="!loadingCheckout">→</span>
               </button>
             </div>
           </div>
@@ -104,7 +105,7 @@
             </button>
             <div>
               <h3 class="text-lg font-bold text-white">Pilih Metode Pembayaran</h3>
-              <p class="text-xs text-slate-400">Total Tagihan: <strong class="text-amber-400">Rp 29.000 / bulan</strong></p>
+              <p class="text-xs text-slate-400">Total Tagihan: <strong class="text-amber-400">Rp 29.000 / bulan</strong> (Mayar.id Gateway)</p>
             </div>
           </div>
 
@@ -116,7 +117,6 @@
             >
               <div class="flex items-center gap-3">
                 <div class="p-2.5 bg-slate-700/60 rounded-lg group-hover:bg-amber-500/20 transition text-amber-400">
-                  <!-- Smartphone Vector Icon -->
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
                     <line x1="12" y1="18" x2="12.01" y2="18"/>
@@ -124,7 +124,7 @@
                 </div>
                 <div>
                   <div class="text-sm font-semibold text-white">QRIS (GoPay, OVO, DANA, ShopeePay, Mobile Banking)</div>
-                  <div class="text-xs text-slate-400">Scan kode QR instant tanpa biaya admin</div>
+                  <div class="text-xs text-slate-400">Scan kode QR instant Mayar.id tanpa biaya admin</div>
                 </div>
               </div>
               <span class="text-amber-400 text-sm font-semibold group-hover:translate-x-1 transition">Pilih →</span>
@@ -174,7 +174,7 @@
             </button>
             <div>
               <h3 class="text-lg font-bold text-white">Konfirmasi Pembayaran</h3>
-              <p class="text-xs text-slate-400">Simulasi Payment Gateway ResearchFinder</p>
+              <p class="text-xs text-slate-400">Invoice ID Mayar: <span class="font-mono text-amber-400">{{ invoiceData?.invoice_id }}</span></p>
             </div>
           </div>
 
@@ -196,8 +196,14 @@
 
           <!-- QR Code Preview if QRIS -->
           <div v-if="selectedMethod === 'qris'" class="text-center bg-white p-4 rounded-xl max-w-[200px] mx-auto mb-6 shadow-lg">
-            <div class="w-36 h-36 mx-auto bg-slate-900 p-2 rounded-lg flex items-center justify-center text-white font-mono text-xs text-center border-4 border-amber-500">
-              [ QRIS KODE SIMULASI ]
+            <img
+              v-if="invoiceData?.qr_code_url"
+              :src="invoiceData.qr_code_url"
+              alt="QRIS Mayar"
+              class="w-36 h-36 mx-auto object-contain"
+            />
+            <div v-else class="w-36 h-36 mx-auto bg-slate-900 p-2 rounded-lg flex items-center justify-center text-white font-mono text-xs text-center border-4 border-amber-500">
+              [ QRIS KODE MAYAR ]
             </div>
             <p class="text-[10px] text-slate-600 font-semibold mt-2">Scan dengan E-Wallet / M-Banking</p>
           </div>
@@ -209,6 +215,17 @@
             <div class="text-[10px] text-slate-400 mt-1">Berlaku selama 24 jam</div>
           </div>
 
+          <!-- Mayar Payment Link Option -->
+          <div v-if="invoiceData?.payment_url" class="mb-4 text-center">
+            <a
+              :href="invoiceData.payment_url"
+              target="_blank"
+              class="text-xs text-indigo-400 hover:text-indigo-300 underline font-medium"
+            >
+              Atau Buka Halaman Pembayaran Resmi Mayar.id ↗
+            </a>
+          </div>
+
           <div class="flex gap-3">
             <button
               @click="step = 'select'"
@@ -217,11 +234,11 @@
               Batal
             </button>
             <button
-              @click="handleUpgrade"
+              @click="confirmPayment"
               :disabled="upgrading"
               class="w-1/2 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-sm rounded-xl transition shadow-lg shadow-amber-500/20 disabled:opacity-50 cursor-pointer"
             >
-              {{ upgrading ? 'Verifikasi Pembayaran...' : 'Konfirmasi & Bayar (Rp 29.000)' }}
+              {{ upgrading ? 'Verifikasi Webhook...' : 'Konfirmasi & Bayar (Rp 29.000)' }}
             </button>
           </div>
         </div>
@@ -239,19 +256,36 @@ const emit = defineEmits(['close', 'upgraded'])
 const authStore = useAuthStore()
 const step = ref<'select' | 'payment' | 'confirm'>('select')
 const selectedMethod = ref('qris')
+const loadingCheckout = ref(false)
 const upgrading = ref(false)
+const invoiceData = ref<{ invoice_id: string; payment_url: string; qr_code_url: string } | null>(null)
 
-async function handleUpgrade() {
+async function startCheckout() {
+  loadingCheckout.value = true
+  try {
+    const { data } = await api.post('/payment/create-checkout')
+    invoiceData.value = data
+    step.value = 'payment'
+  } catch (err) {
+    console.error('Failed to create Mayar checkout:', err)
+    alert('Gagal membuat invoice Mayar.id. Silakan coba lagi.')
+  } finally {
+    loadingCheckout.value = false
+  }
+}
+
+async function confirmPayment() {
+  if (!invoiceData.value) return
   upgrading.value = true
   try {
-    const { data } = await api.post('/auth/upgrade-pro')
-    authStore.user = data
+    const { data } = await api.post(`/payment/simulate-confirm/${invoiceData.value.invoice_id}`)
+    authStore.user = { ...authStore.user, plan_tier: 'pro', storage_quota_bytes: data.storage_quota_bytes }
     emit('upgraded')
     emit('close')
     alert('Pembayaran Berhasil! Akun Anda telah resmi di-upgrade ke Paket Pro Student (Kuota 5 GB)!')
   } catch (err) {
-    console.error('Failed to upgrade:', err)
-    alert('Gagal memproses upgrade. Silakan coba lagi.')
+    console.error('Failed to confirm payment:', err)
+    alert('Gagal memverifikasi pembayaran. Silakan coba lagi.')
   } finally {
     upgrading.value = false
   }

@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import create_tables, engine
 from app.core.cache import init_redis
-from app.routers import auth, papers, collections, bibliography, history, ai, upload, dashboard
+from app.routers import auth, papers, collections, bibliography, history, ai, upload, dashboard, payment
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -73,6 +73,7 @@ app.include_router(history.router, prefix="/api/history", tags=["History"])
 app.include_router(ai.router, prefix="/api/ai", tags=["AI"])
 app.include_router(upload.router, prefix="/api/upload", tags=["Upload"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
+app.include_router(payment.router, prefix="/api/payment", tags=["Payment"])
 
 
 @app.get("/api/health")
