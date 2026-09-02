@@ -12,6 +12,7 @@ services:
       - backend
       - frontend
     restart: unless-stopped
+    mem_limit: 128m
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost/health"]
       interval: 30s
@@ -31,6 +32,7 @@ services:
       redis:
         condition: service_healthy
     restart: unless-stopped
+    mem_limit: 512m
 
   # Vue 3 Frontend (production — built static files served by nginx)
   frontend:
@@ -38,6 +40,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod
     restart: unless-stopped
+    mem_limit: 256m
 
   # PostgreSQL Database
   postgres:
@@ -54,6 +57,7 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    mem_limit: 512m
 
   # Redis Cache
   redis:
@@ -66,6 +70,7 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    mem_limit: 256m
 
 volumes:
   pgdata:

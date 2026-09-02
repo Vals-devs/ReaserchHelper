@@ -22,6 +22,10 @@ if _is_sqlite:
     _engine_kwargs["connect_args"] = {"check_same_thread": False}
 else:
     _engine_kwargs["pool_pre_ping"] = True
+    _engine_kwargs["pool_size"] = 10
+    _engine_kwargs["max_overflow"] = 20
+    _engine_kwargs["pool_timeout"] = 30
+    _engine_kwargs["pool_recycle"] = 1800
 
 engine = create_async_engine(settings.DATABASE_URL, **_engine_kwargs)
 
@@ -46,7 +50,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def create_tables():
-    """Create all tables and ensure new columns exist on existing databases."""
+    """Create all tables, ensure new columns exist, and create database performance indexes."""
     from app.models import Base  # noqa: F401
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -54,6 +58,9 @@ async def create_tables():
             "ALTER TABLE papers ADD COLUMN IF NOT EXISTS journal VARCHAR(255);",
             "ALTER TABLE papers ADD COLUMN IF NOT EXISTS accreditation VARCHAR(100);",
             "ALTER TABLE papers ADD COLUMN IF NOT EXISTS user_id VARCHAR(36);",
+            "CREATE INDEX IF NOT EXISTS idx_papers_source_user ON papers(source, user_id);",
+            "CREATE INDEX IF NOT EXISTS idx_papers_cached_at ON papers(cached_at);",
+            "CREATE INDEX IF NOT EXISTS idx_search_history_user ON search_history(user_id, searched_at);",
         ]:
             try:
                 await conn.execute(text(stmt))

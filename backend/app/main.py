@@ -23,6 +23,16 @@ async def lifespan(app: FastAPI):
     await create_tables()
     logger.info("Database tables ready")
 
+    # Run database & storage maintenance tasks
+    try:
+        from app.services.cleanup import purge_all_uploaded_papers, prune_stale_cache_papers, cleanup_orphan_files
+        await purge_all_uploaded_papers()
+        await prune_stale_cache_papers(days=14)
+        await cleanup_orphan_files()
+        logger.info("Database and storage maintenance complete.")
+    except Exception as e:
+        logger.warning(f"Maintenance task failed: {e}")
+
     await init_redis()
 
     _is_sqlite = settings.DATABASE_URL.startswith("sqlite")

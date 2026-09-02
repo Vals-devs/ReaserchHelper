@@ -41,6 +41,13 @@ async def upload_pdf(
     if len(file_bytes) < 100:
         raise HTTPException(status_code=400, detail="File terlalu kecil atau kosong")
 
+    # Validate Magic Bytes (%PDF-) signature to prevent file spoofing
+    if not file_bytes.startswith(b"%PDF-"):
+        raise HTTPException(
+            status_code=400,
+            detail="File yang di-upload bukan dokumen PDF valid.",
+        )
+
     # Extract text from PDF
     try:
         pdf_data = extract_text_from_pdf(file_bytes)
