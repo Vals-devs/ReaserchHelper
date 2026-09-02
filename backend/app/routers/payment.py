@@ -174,15 +174,18 @@ async def confirm_direct_payment(
     import uuid
     tx_id = f"tx_direct_{uuid.uuid4().hex[:10]}"
     
-    transaction = PaymentTransaction(
-        user_id=current_user.id,
-        invoice_id=tx_id,
-        amount=29000,
-        status="PAID",
-        payment_method=method.upper(),
-        paid_at=datetime.now(timezone.utc),
-    )
-    db.add(transaction)
+    try:
+        transaction = PaymentTransaction(
+            user_id=current_user.id,
+            invoice_id=tx_id,
+            amount=29000,
+            status="PAID",
+            payment_method=method.upper(),
+            paid_at=datetime.now(timezone.utc),
+        )
+        db.add(transaction)
+    except Exception as e:
+        logger.warning(f"Could not log payment_transaction: {e}")
 
     # Upgrade User to Pro
     current_user.plan_tier = "pro"

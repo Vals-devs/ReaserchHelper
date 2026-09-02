@@ -70,6 +70,18 @@ async def create_tables():
             "CREATE INDEX IF NOT EXISTS idx_papers_source_user ON papers(source, user_id);",
             "CREATE INDEX IF NOT EXISTS idx_papers_cached_at ON papers(cached_at);",
             "CREATE INDEX IF NOT EXISTS idx_search_history_user ON search_history(user_id, searched_at);",
+            """CREATE TABLE IF NOT EXISTS payment_transactions (
+                id VARCHAR(36) PRIMARY KEY,
+                user_id VARCHAR(36) NOT NULL,
+                invoice_id VARCHAR(255) UNIQUE NOT NULL,
+                amount BIGINT DEFAULT 29000,
+                status VARCHAR(50) DEFAULT 'PENDING',
+                payment_method VARCHAR(100),
+                payment_url TEXT,
+                qr_code_url TEXT,
+                created_at TIMESTAMP WITH TIME ZONE,
+                paid_at TIMESTAMP WITH TIME ZONE
+            );""",
         ]:
             try:
                 await conn.execute(text(stmt))
