@@ -25,13 +25,10 @@ async def lifespan(app: FastAPI):
 
     # Run database & storage maintenance tasks
     try:
-        from sqlalchemy import text
         from app.services.cleanup import purge_all_uploaded_papers, prune_stale_cache_papers, cleanup_orphan_files
         await purge_all_uploaded_papers()
         await prune_stale_cache_papers(days=14)
         await cleanup_orphan_files()
-        async with engine.begin() as conn:
-            await conn.execute(text("UPDATE users SET plan_tier = 'free', storage_quota_bytes = 104857600 WHERE email = 'ival@gmail.com';"))
         logger.info("Database and storage maintenance complete.")
     except Exception as e:
         logger.warning(f"Maintenance task failed: {e}")

@@ -24,9 +24,6 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str = "gemini-3.5-flash-lite"
     SEMANTIC_SCHOLAR_API_KEY: str = ""
     UNPAYWALL_EMAIL: str = ""
-    MAYAR_API_KEY: str = ""
-    MAYAR_API_URL: str = "https://api.mayar.id/hl/v1/payment/create"
-    MAYAR_WEBHOOK_TOKEN: str = ""
 
     # Midtrans Payment Gateway Configs
     MIDTRANS_SERVER_KEY: str = "SB-Mid-server-SampleServerKey123"
