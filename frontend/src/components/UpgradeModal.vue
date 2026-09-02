@@ -86,156 +86,77 @@
               </div>
 
               <button
-                @click="step = 'payment'"
+                @click="step = 'confirm'"
                 class="mt-5 w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-sm rounded-xl transition shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2"
               >
-                <span>Pilih Metode Pembayaran</span>
+                <span>Bayar via QRIS (Rp 29.000)</span>
                 <span>→</span>
               </button>
             </div>
           </div>
         </div>
 
-        <!-- STEP 2: SELECT PAYMENT METHOD -->
-        <div v-else-if="step === 'payment'" class="p-6">
-          <div class="flex items-center gap-3 pb-4 mb-4 border-b border-slate-800">
+        <!-- STEP 2: REAL QRIS PAYMENT & CONFIRMATION -->
+        <div v-else-if="step === 'confirm'" class="p-6">
+          <div class="flex items-center gap-3 pb-3 mb-4 border-b border-slate-800">
             <button @click="step = 'select'" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer">
               ← Kembali
             </button>
             <div>
-              <h3 class="text-lg font-bold text-white">Pilih Metode Pembayaran</h3>
-              <p class="text-xs text-slate-400">Total Tagihan: <strong class="text-amber-400">Rp 29.000 / bulan</strong> (Transfer Langsung / QRIS)</p>
-            </div>
-          </div>
-
-          <div class="space-y-3 mb-6">
-            <!-- QRIS Option -->
-            <label
-              @click="selectedMethod = 'qris'; step = 'confirm'"
-              class="flex items-center justify-between p-4 rounded-xl border border-slate-700/80 bg-slate-800/50 hover:border-amber-500/80 hover:bg-slate-800 transition cursor-pointer group"
-            >
-              <div class="flex items-center gap-3">
-                <div class="p-2.5 bg-slate-700/60 rounded-lg group-hover:bg-amber-500/20 transition text-amber-400">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-                    <line x1="12" y1="18" x2="12.01" y2="18"/>
-                  </svg>
-                </div>
-                <div>
-                  <div class="text-sm font-semibold text-white">QRIS Direct (GoPay, OVO, DANA, ShopeePay, Mobile Banking)</div>
-                  <div class="text-xs text-slate-400">Scan QRIS merchant resmi tanpa potongan biaya admin</div>
-                </div>
-              </div>
-              <span class="text-amber-400 text-sm font-semibold group-hover:translate-x-1 transition">Pilih →</span>
-            </label>
-
-            <!-- BCA Option -->
-            <label
-              @click="selectedMethod = 'bca'; step = 'confirm'"
-              class="flex items-center justify-between p-4 rounded-xl border border-slate-700/80 bg-slate-800/50 hover:border-amber-500/80 hover:bg-slate-800 transition cursor-pointer group"
-            >
-              <div class="flex items-center gap-3">
-                <div class="p-2 bg-blue-500/10 rounded-lg group-hover:bg-amber-500/20 transition text-blue-400 font-bold text-xs">
-                  BCA
-                </div>
-                <div>
-                  <div class="text-sm font-semibold text-white">Transfer Bank BCA</div>
-                  <div class="text-xs text-slate-400">Transfer langsung ke Rekening BCA</div>
-                </div>
-              </div>
-              <span class="text-amber-400 text-sm font-semibold group-hover:translate-x-1 transition">Pilih →</span>
-            </label>
-
-            <!-- Mandiri Option -->
-            <label
-              @click="selectedMethod = 'mandiri'; step = 'confirm'"
-              class="flex items-center justify-between p-4 rounded-xl border border-slate-700/80 bg-slate-800/50 hover:border-amber-500/80 hover:bg-slate-800 transition cursor-pointer group"
-            >
-              <div class="flex items-center gap-3">
-                <div class="p-2 bg-yellow-500/10 rounded-lg group-hover:bg-amber-500/20 transition text-yellow-400 font-bold text-xs">
-                  MDR
-                </div>
-                <div>
-                  <div class="text-sm font-semibold text-white">Transfer Bank Mandiri</div>
-                  <div class="text-xs text-slate-400">Transfer langsung ke Rekening Mandiri</div>
-                </div>
-              </div>
-              <span class="text-amber-400 text-sm font-semibold group-hover:translate-x-1 transition">Pilih →</span>
-            </label>
-          </div>
-        </div>
-
-        <!-- STEP 3: INVOICE & CONFIRMATION -->
-        <div v-else-if="step === 'confirm'" class="p-6">
-          <div class="flex items-center gap-3 pb-4 mb-4 border-b border-slate-800">
-            <button @click="step = 'payment'" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer">
-              ← Ganti Metode
-            </button>
-            <div>
-              <h3 class="text-lg font-bold text-white">Instruksi Pembayaran {{ selectedMethod.toUpperCase() }}</h3>
-              <p class="text-xs text-slate-400">Transfer tepat sesuai nominal tagihan</p>
+              <h3 class="text-lg font-bold text-white">Pembayaran QRIS All Payment</h3>
+              <p class="text-xs text-slate-400">Scan QRIS menggunakan GoPay, DANA, OVO, ShopeePay, atau M-Banking</p>
             </div>
           </div>
 
           <!-- Invoice Details -->
-          <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 mb-5">
-            <div class="flex justify-between items-center text-sm border-b border-slate-700/60 pb-3 mb-3">
+          <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-3 mb-4">
+            <div class="flex justify-between items-center text-xs border-b border-slate-700/60 pb-2 mb-2">
+              <span class="text-slate-400">Merchant Resmi:</span>
+              <span class="font-bold text-amber-400">TOKO ARKAN, LPPRJ</span>
+            </div>
+            <div class="flex justify-between items-center text-xs border-b border-slate-700/60 pb-2 mb-2">
               <span class="text-slate-400">Produk:</span>
-              <span class="font-bold text-white">ResearchFinder Pro Student Plan (1 Bulan)</span>
+              <span class="font-bold text-white">ResearchFinder Pro Student (1 Bulan)</span>
             </div>
-            <div class="flex justify-between items-center text-sm border-b border-slate-700/60 pb-3 mb-3">
-              <span class="text-slate-400">Metode Pembayaran:</span>
-              <span class="font-semibold text-amber-400 uppercase">{{ selectedMethod }} DIRECT</span>
-            </div>
-            <div class="flex justify-between items-center text-sm">
+            <div class="flex justify-between items-center text-xs">
               <span class="text-slate-400">Total Nominal:</span>
-              <span class="text-xl font-extrabold text-amber-300">Rp 29.000</span>
+              <span class="text-lg font-extrabold text-amber-300">Rp 29.000</span>
             </div>
           </div>
 
-          <!-- QR Code if QRIS Direct -->
-          <div v-if="selectedMethod === 'qris'" class="text-center bg-white p-4 rounded-xl max-w-[210px] mx-auto mb-5 shadow-lg">
+          <!-- Real QRIS Image Card -->
+          <div class="bg-white p-3 rounded-xl max-w-[240px] mx-auto mb-4 shadow-xl text-center border-2 border-amber-500/50">
             <img
-              src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=00020101021126580014ID.LINKAJA.WWW01189360091100212003880215200803123456785204581253033605405290005802ID5914RESEARCHFINDER6007JAKARTA61051234562070703A016304A1B2"
-              alt="QRIS Merchant Direct"
-              class="w-38 h-38 mx-auto object-contain"
+              src="@/assets/qris_merchant.png"
+              alt="QRIS TOKO ARKAN LPPRJ"
+              class="w-48 h-auto mx-auto object-contain rounded-lg"
             />
-            <p class="text-[10px] text-slate-700 font-bold mt-2">QRIS Merchant ResearchFinder</p>
-            <p class="text-[9px] text-slate-500">Scan via GoPay / DANA / OVO / M-Banking</p>
-          </div>
-
-          <!-- Bank Details if BCA / Mandiri -->
-          <div v-else class="bg-slate-800/90 p-4 rounded-xl text-center mb-5 border border-amber-500/30">
-            <div class="text-xs text-slate-400 mb-1">Nomor Rekening {{ selectedMethod.toUpperCase() }}:</div>
-            <div class="text-2xl font-mono font-bold text-amber-300 tracking-wider my-1 select-all">
-              {{ selectedMethod === 'bca' ? '8801293849' : '137001928374' }}
-            </div>
-            <div class="text-xs font-semibold text-slate-300">a.n. ResearchFinder SaaS</div>
-            <div class="text-[10px] text-slate-400 mt-2">Salin nomor rekening & lakukan transfer nominal Rp 29.000</div>
+            <p class="text-[10px] text-slate-800 font-bold mt-2">NMID: ID1026522463656</p>
+            <p class="text-[9px] text-slate-500">Satu QRIS Untuk Semua Pembayaran</p>
           </div>
 
           <!-- Sender Name Input (Optional) -->
-          <div class="mb-5">
-            <label class="block text-xs font-medium text-slate-300 mb-1">Nama Pemilik Rekening / Pengirim (Opsional):</label>
+          <div class="mb-4">
+            <label class="block text-xs font-medium text-slate-300 mb-1">Nama Pengirim / Catatan (Opsional):</label>
             <input
               v-model="senderName"
               type="text"
               placeholder="Contoh: Ival Permana"
-              class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+              class="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
             />
           </div>
 
           <div class="flex gap-3">
             <button
               @click="step = 'select'"
-              class="w-1/2 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm rounded-xl transition cursor-pointer"
+              class="w-1/2 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl transition cursor-pointer"
             >
               Batal
             </button>
             <button
               @click="confirmDirectPayment"
               :disabled="upgrading"
-              class="w-1/2 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-sm rounded-xl transition shadow-lg shadow-amber-500/20 disabled:opacity-50 cursor-pointer"
+              class="w-1/2 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs rounded-xl transition shadow-lg shadow-amber-500/20 disabled:opacity-50 cursor-pointer"
             >
               {{ upgrading ? 'Konfirmasi Pembayaran...' : 'Konfirmasi Pembayaran Saya' }}
             </button>
@@ -253,8 +174,7 @@ import { useAuthStore } from '@/stores/auth'
 
 const emit = defineEmits(['close', 'upgraded'])
 const authStore = useAuthStore()
-const step = ref<'select' | 'payment' | 'confirm'>('select')
-const selectedMethod = ref('qris')
+const step = ref<'select' | 'confirm'>('select')
 const senderName = ref('')
 const upgrading = ref(false)
 
@@ -263,14 +183,14 @@ async function confirmDirectPayment() {
   try {
     const { data } = await api.post('/payment/confirm-direct', null, {
       params: {
-        method: selectedMethod.value,
+        method: 'QRIS',
         sender_name: senderName.value || authStore.user?.name || ''
       }
     })
     authStore.user = { ...authStore.user, plan_tier: 'pro', storage_quota_bytes: data.storage_quota_bytes }
     emit('upgraded')
     emit('close')
-    alert(`🎉 Terima Kasih! Konfirmasi pembayaran via ${selectedMethod.value.toUpperCase()} berhasil! Akun Anda telah resmi di-upgrade ke Paket Pro Student (Kuota 5 GB)!`)
+    alert('🎉 Terima Kasih! Pembayaran QRIS Anda telah berhasil dikonfirmasi! Akun Anda kini resmi aktif di Paket Pro Student (Kuota 5 GB)!')
   } catch (err) {
     console.error('Failed to confirm direct payment:', err)
     alert('Gagal memproses konfirmasi. Silakan coba lagi.')
