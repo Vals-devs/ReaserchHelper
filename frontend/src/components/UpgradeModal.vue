@@ -14,8 +14,11 @@
         <div v-if="step === 'select'">
           <!-- Header Banner -->
           <div class="bg-gradient-to-r from-amber-500/20 via-indigo-500/20 to-blue-500/20 p-6 border-b border-slate-800 text-center relative overflow-hidden">
-            <div class="inline-block p-3 bg-amber-500/20 rounded-2xl mb-3 border border-amber-500/30">
-              <span class="text-3xl">👑</span>
+            <div class="inline-flex p-3 bg-amber-500/20 rounded-2xl mb-3 border border-amber-500/30">
+              <!-- Crown Vector Icon -->
+              <svg class="w-8 h-8 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
+                <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+              </svg>
             </div>
             <h2 class="text-2xl font-bold text-white mb-1">Upgrade ke ResearchFinder Pro</h2>
             <p class="text-slate-300 text-sm max-w-md mx-auto">
@@ -32,16 +35,16 @@
                 <div class="text-2xl font-extrabold text-white my-2">Rp 0 <span class="text-xs font-normal text-slate-400">/ selamanya</span></div>
                 <ul class="space-y-2.5 text-xs text-slate-300 mt-4">
                   <li class="flex items-center gap-2">
-                    <span class="text-slate-500">✓</span> Kuota Storage PDF 100 MB (~15 Dokumen)
+                    <span class="text-slate-500 font-bold">✓</span> Kuota Storage PDF 100 MB (~15 Dokumen)
                   </li>
                   <li class="flex items-center gap-2">
-                    <span class="text-slate-500">✓</span> Max 10 MB per File PDF
+                    <span class="text-slate-500 font-bold">✓</span> Max 10 MB per File PDF
                   </li>
                   <li class="flex items-center gap-2">
-                    <span class="text-slate-500">✓</span> Max 3 Paper di AI Gap Analysis
+                    <span class="text-slate-500 font-bold">✓</span> Max 3 Paper di AI Gap Analysis
                   </li>
                   <li class="flex items-center gap-2">
-                    <span class="text-slate-500">✓</span> Ekspor Sitasi Format APA & IEEE
+                    <span class="text-slate-500 font-bold">✓</span> Ekspor Sitasi Format APA & IEEE
                   </li>
                 </ul>
               </div>
@@ -112,8 +115,12 @@
               class="flex items-center justify-between p-4 rounded-xl border border-slate-700/80 bg-slate-800/50 hover:border-amber-500/80 hover:bg-slate-800 transition cursor-pointer group"
             >
               <div class="flex items-center gap-3">
-                <div class="p-2.5 bg-slate-700/60 rounded-lg group-hover:bg-amber-500/20 transition">
-                  📱
+                <div class="p-2.5 bg-slate-700/60 rounded-lg group-hover:bg-amber-500/20 transition text-amber-400">
+                  <!-- Smartphone Vector Icon -->
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                    <line x1="12" y1="18" x2="12.01" y2="18"/>
+                  </svg>
                 </div>
                 <div>
                   <div class="text-sm font-semibold text-white">QRIS (GoPay, OVO, DANA, ShopeePay, Mobile Banking)</div>
@@ -129,7 +136,7 @@
               class="flex items-center justify-between p-4 rounded-xl border border-slate-700/80 bg-slate-800/50 hover:border-amber-500/80 hover:bg-slate-800 transition cursor-pointer group"
             >
               <div class="flex items-center gap-3">
-                <div class="p-2.5 bg-blue-500/10 rounded-lg group-hover:bg-amber-500/20 transition text-blue-400 font-bold text-xs">
+                <div class="p-2 bg-blue-500/10 rounded-lg group-hover:bg-amber-500/20 transition text-blue-400 font-bold text-xs">
                   BCA
                 </div>
                 <div>
@@ -146,7 +153,7 @@
               class="flex items-center justify-between p-4 rounded-xl border border-slate-700/80 bg-slate-800/50 hover:border-amber-500/80 hover:bg-slate-800 transition cursor-pointer group"
             >
               <div class="flex items-center gap-3">
-                <div class="p-2.5 bg-yellow-500/10 rounded-lg group-hover:bg-amber-500/20 transition text-yellow-400 font-bold text-xs">
+                <div class="p-2 bg-yellow-500/10 rounded-lg group-hover:bg-amber-500/20 transition text-yellow-400 font-bold text-xs">
                   MDR
                 </div>
                 <div>
@@ -241,7 +248,7 @@ async function handleUpgrade() {
     authStore.user = data
     emit('upgraded')
     emit('close')
-    alert('🎉 Pembayaran Berhasil! Akun Anda telah resmi di-upgrade ke Paket Pro Student (Kuota 5 GB)!')
+    alert('Pembayaran Berhasil! Akun Anda telah resmi di-upgrade ke Paket Pro Student (Kuota 5 GB)!')
   } catch (err) {
     console.error('Failed to upgrade:', err)
     alert('Gagal memproses upgrade. Silakan coba lagi.')

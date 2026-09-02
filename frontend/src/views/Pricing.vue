@@ -2,8 +2,12 @@
   <div class="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-12 animate-fade-in">
     <!-- Header -->
     <div class="max-w-4xl mx-auto text-center mb-12">
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-4">
-        👑 Pilihan Paket Membership
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-4">
+        <!-- Crown Vector Icon -->
+        <svg class="w-4 h-4 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
+          <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+        </svg>
+        <span>Pilihan Paket Membership</span>
       </div>
       <h1 class="text-3xl md:text-5xl font-extrabold text-white mb-4">
         Tingkatkan Efisiensi Riset & Skripsi Anda
@@ -95,9 +99,10 @@
 
         <button
           @click="showModal = true"
-          class="mt-8 w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold rounded-xl text-sm transition shadow-lg shadow-amber-500/25 cursor-pointer"
+          class="mt-8 w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold rounded-xl text-sm transition shadow-lg shadow-amber-500/25 cursor-pointer flex items-center justify-center gap-2"
         >
-          {{ authStore.user?.plan_tier === 'pro' ? 'Akun Anda Saat Ini (Pro)' : 'Pilih Metode Pembayaran (Rp 29.000/bln)' }}
+          <span>{{ authStore.user?.plan_tier === 'pro' ? 'Akun Anda Saat Ini (Pro)' : 'Pilih Metode Pembayaran (Rp 29.000/bln)' }}</span>
+          <span>→</span>
         </button>
       </div>
     </div>

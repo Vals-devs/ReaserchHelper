@@ -9,9 +9,12 @@
       </div>
       <span
         :class="planTier === 'pro' ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-slate-700 text-slate-300 border-slate-600'"
-        class="px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded-full border"
+        class="px-2 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded-full border flex items-center gap-1"
       >
-        {{ planTier === 'pro' ? '👑 PRO' : 'FREE' }}
+        <svg v-if="planTier === 'pro'" class="w-3 h-3 text-amber-400 fill-amber-400" viewBox="0 0 24 24">
+          <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/>
+        </svg>
+        <span>{{ planTier === 'pro' ? 'PRO' : 'FREE' }}</span>
       </span>
     </div>
 
@@ -36,7 +39,9 @@
       class="mt-2.5 w-full py-1.5 px-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs rounded-lg transition-all shadow-lg shadow-amber-500/20 flex items-center justify-center gap-1.5 group cursor-pointer"
     >
       <span>Upgrade Ke Pro</span>
-      <span class="group-hover:translate-x-0.5 transition-transform">✨</span>
+      <svg class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform text-slate-950" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+      </svg>
     </button>
 
     <!-- Upgrade Modal -->
