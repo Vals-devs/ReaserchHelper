@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     UNPAYWALL_EMAIL: str = ""
     MAYAR_API_KEY: str = ""
     MAYAR_API_URL: str = "https://api.mayar.id/hl/v1/payment/create"
+    MAYAR_WEBHOOK_TOKEN: str = ""
 
     # CORS
     CORS_ORIGINS: list[str] = [
