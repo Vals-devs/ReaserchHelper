@@ -38,14 +38,20 @@
               <li class="flex items-center gap-3">
                 <span class="text-slate-500 font-bold">✓</span> Ekspor Sitasi Format APA & IEEE
               </li>
-              <li class="flex items-center gap-3 text-slate-500 line-through">
-                <span>✓</span> Prioritas AI Fast Reasoning
-              </li>
             </ul>
           </div>
         </div>
 
         <button
+          v-if="authStore.user?.plan_tier === 'pro'"
+          @click="handleDowngrade"
+          :disabled="upgrading"
+          class="mt-8 w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-sm transition cursor-pointer"
+        >
+          Kembali ke Paket Gratis (100 MB)
+        </button>
+        <button
+          v-else
           disabled
           class="mt-8 w-full py-3 bg-slate-800 text-slate-400 font-semibold rounded-xl text-sm opacity-60"
         >
@@ -88,14 +94,16 @@
         </div>
 
         <button
-          @click="handleUpgrade"
-          :disabled="upgrading"
-          class="mt-8 w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold rounded-xl text-sm transition shadow-lg shadow-amber-500/25 disabled:opacity-50 cursor-pointer"
+          @click="showModal = true"
+          class="mt-8 w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold rounded-xl text-sm transition shadow-lg shadow-amber-500/25 cursor-pointer"
         >
-          {{ upgrading ? 'Memproses Upgrade...' : 'Upgrade Ke Pro (Rp 29.000/bln)' }}
+          {{ authStore.user?.plan_tier === 'pro' ? 'Akun Anda Saat Ini (Pro)' : 'Pilih Metode Pembayaran (Rp 29.000/bln)' }}
         </button>
       </div>
     </div>
+
+    <!-- Upgrade Modal -->
+    <UpgradeModal v-if="showModal" @close="showModal = false" />
   </div>
 </template>
 
@@ -103,19 +111,21 @@
 import { ref } from 'vue'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
+import UpgradeModal from '@/components/UpgradeModal.vue'
 
 const authStore = useAuthStore()
 const upgrading = ref(false)
+const showModal = ref(false)
 
-async function handleUpgrade() {
+async function handleDowngrade() {
   upgrading.value = true
   try {
-    const { data } = await api.post('/auth/upgrade-pro')
+    const { data } = await api.post('/auth/downgrade-free')
     authStore.user = data
-    alert('🎉 Selamat! Akun Anda telah berhasil di-upgrade ke Paket Pro Student (Kuota 5 GB)!')
+    alert('Akun Anda telah dikembalikan ke Paket Gratis (Kuota 100 MB).')
   } catch (err) {
-    console.error('Failed to upgrade:', err)
-    alert('Gagal memproses upgrade. Silakan coba lagi.')
+    console.error('Failed to downgrade:', err)
+    alert('Gagal memproses downgrade.')
   } finally {
     upgrading.value = false
   }
