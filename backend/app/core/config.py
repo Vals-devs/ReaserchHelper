@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     UNPAYWALL_EMAIL: str = ""
 
     # Midtrans Payment Gateway Configs
-    MIDTRANS_SERVER_KEY: str = "SB-Mid-server-SampleServerKey123"
-    MIDTRANS_CLIENT_KEY: str = "SB-Mid-client-SampleClientKey123"
+    MIDTRANS_SERVER_KEY: str = "SB-Mid-server-wh5xPXluIyQ2fSbTyTwzWGG1"
+    MIDTRANS_CLIENT_KEY: str = "SB-Mid-client-law3uN3W_llPhHYd"
     MIDTRANS_IS_PRODUCTION: bool = False
 
     # CORS
