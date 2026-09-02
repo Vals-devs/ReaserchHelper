@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import StorageWidget from '@/components/StorageWidget.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -74,6 +75,11 @@ function handleLogout() {
         <span class="flex-shrink-0 [&>svg]:h-[18px] [&>svg]:w-[18px]" v-html="item.icon"></span>
         {{ item.label }}
       </router-link>
+
+      <!-- Storage Widget -->
+      <div class="mt-4 px-1">
+        <StorageWidget />
+      </div>
     </nav>
 
     <!-- Bottom -->

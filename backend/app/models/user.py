@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import String, Text, DateTime
+from sqlalchemy import String, Text, DateTime, BigInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models import Base
@@ -20,6 +20,8 @@ class User(Base):
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     institution: Mapped[str | None] = mapped_column(String(255), nullable=True)
     research_interests: Mapped[str | None] = mapped_column(Text, nullable=True)
+    plan_tier: Mapped[str] = mapped_column(String(50), default="free")
+    storage_quota_bytes: Mapped[int] = mapped_column(BigInteger, default=104857600)  # 100 MB default
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

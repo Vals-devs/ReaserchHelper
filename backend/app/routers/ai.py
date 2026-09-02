@@ -82,12 +82,21 @@ async def gap_analysis(
 ):
     """Analyze research gaps across multiple papers."""
     if len(data.paper_ids) < 3:
-        raise HTTPException(status_code=400, detail="Select at least 3 papers")
+        raise HTTPException(status_code=400, detail="Pilih minimal 3 paper")
+
+    plan_tier = getattr(current_user, "plan_tier", "free") or "free"
+    max_allowed = 15 if plan_tier == "pro" else 3
+
+    if len(data.paper_ids) > max_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Paket Gratis hanya dapat menganalisis hingga 3 paper sekaligus. Tingkatkan ke Paket Pro untuk menganalisis hingga 15 paper!",
+        )
 
     result = await db.execute(select(Paper).where(Paper.id.in_(data.paper_ids)))
     papers = result.scalars().all()
     if len(papers) < 3:
-        raise HTTPException(status_code=404, detail="Not enough papers found")
+        raise HTTPException(status_code=404, detail="Paper yang dipilih tidak ditemukan")
 
     papers_data = [
         {

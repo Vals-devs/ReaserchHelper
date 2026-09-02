@@ -48,6 +48,22 @@ async def upload_pdf(
             detail="File yang di-upload bukan dokumen PDF valid.",
         )
 
+    # Calculate current storage used by this user
+    user_papers_res = await db.execute(
+        select(Paper).where(Paper.source == "uploaded", Paper.user_id == current_user.id)
+    )
+    user_papers = user_papers_res.scalars().all()
+    current_used_bytes = sum(p.file_size_bytes or 0 for p in user_papers)
+    user_quota = getattr(current_user, "storage_quota_bytes", 104857600) or 104857600
+
+    if current_used_bytes + len(file_bytes) > user_quota:
+        used_mb = round(current_used_bytes / (1024 * 1024), 1)
+        quota_mb = round(user_quota / (1024 * 1024), 0)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Kuota penyimpanan Anda ({quota_mb:.0f} MB) telah penuh ({used_mb} MB terpakai). Tingkatkan ke Paket Pro untuk mendapatkan kuota 5 GB!",
+        )
+
     # Extract text from PDF
     try:
         pdf_data = extract_text_from_pdf(file_bytes)
@@ -111,6 +127,7 @@ async def upload_pdf(
         accreditation=metadata.get("accreditation", "PDF Uploaded"),
         uploaded_file_path=str(file_path),
         user_id=current_user.id,
+        file_size_bytes=len(file_bytes),
         page_count=pdf_data["page_count"],
     )
     db.add(paper)
@@ -127,6 +144,32 @@ async def upload_pdf(
         "accreditation": paper.accreditation,
         "page_count": paper.page_count,
         "uploaded_at": paper.cached_at.isoformat(),
+    }
+
+
+@router.get("/storage-usage")
+async def get_storage_usage(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get current user's storage usage and quota."""
+    user_papers_res = await db.execute(
+        select(Paper).where(Paper.source == "uploaded", Paper.user_id == current_user.id)
+    )
+    user_papers = user_papers_res.scalars().all()
+    used_bytes = sum(p.file_size_bytes or 0 for p in user_papers)
+    quota_bytes = getattr(current_user, "storage_quota_bytes", 104857600) or 104857600
+    plan_tier = getattr(current_user, "plan_tier", "free") or "free"
+
+    percentage = min(100.0, round((used_bytes / quota_bytes) * 100, 1))
+
+    return {
+        "used_bytes": used_bytes,
+        "quota_bytes": quota_bytes,
+        "used_mb": round(used_bytes / (1024 * 1024), 2),
+        "quota_mb": round(quota_bytes / (1024 * 1024), 0),
+        "percentage": percentage,
+        "plan_tier": plan_tier,
     }
 
 

@@ -83,3 +83,16 @@ async def update_profile(
     await db.flush()
     await db.refresh(current_user)
     return UserResponse.model_validate(current_user)
+
+
+@router.post("/upgrade-pro", response_model=UserResponse)
+async def upgrade_to_pro(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Upgrade user plan to Pro Student Tier (5 GB Storage)."""
+    current_user.plan_tier = "pro"
+    current_user.storage_quota_bytes = 5368709120  # 5 GB
+    await db.flush()
+    await db.refresh(current_user)
+    return UserResponse.model_validate(current_user)

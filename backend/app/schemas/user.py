@@ -31,6 +31,8 @@ class UserResponse(BaseModel):
     email: str
     institution: str | None = None
     research_interests: str | None = None
+    plan_tier: str = "free"
+    storage_quota_bytes: int = 104857600
     created_at: datetime
 
     model_config = {"from_attributes": True}
