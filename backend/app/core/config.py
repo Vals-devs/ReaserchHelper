@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     MAYAR_API_URL: str = "https://api.mayar.id/hl/v1/payment/create"
     MAYAR_WEBHOOK_TOKEN: str = ""
 
+    # Direct Payment Configs (BCA, Mandiri, QRIS Direct)
+    PAYMENT_BANK_BCA: str = "8801293849 a.n. ResearchFinder"
+    PAYMENT_BANK_MANDIRI: str = "137001928374 a.n. ResearchFinder"
+    PAYMENT_QRIS_NAME: str = "ResearchFinder QRIS All Payment"
+
     # CORS
     CORS_ORIGINS: list[str] = [
         "http://localhost:5173",

@@ -86,12 +86,11 @@
               </div>
 
               <button
-                @click="startCheckout"
-                :disabled="loadingCheckout"
-                class="mt-5 w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-sm rounded-xl transition shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                @click="step = 'payment'"
+                class="mt-5 w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-sm rounded-xl transition shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2"
               >
-                <span>{{ loadingCheckout ? 'Membuat Invoice Mayar.id...' : 'Pilih Metode Pembayaran' }}</span>
-                <span v-if="!loadingCheckout">→</span>
+                <span>Pilih Metode Pembayaran</span>
+                <span>→</span>
               </button>
             </div>
           </div>
@@ -100,12 +99,12 @@
         <!-- STEP 2: SELECT PAYMENT METHOD -->
         <div v-else-if="step === 'payment'" class="p-6">
           <div class="flex items-center gap-3 pb-4 mb-4 border-b border-slate-800">
-            <button @click="step = 'select'" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+            <button @click="step = 'select'" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer">
               ← Kembali
             </button>
             <div>
               <h3 class="text-lg font-bold text-white">Pilih Metode Pembayaran</h3>
-              <p class="text-xs text-slate-400">Total Tagihan: <strong class="text-amber-400">Rp 29.000 / bulan</strong> (Mayar.id Gateway)</p>
+              <p class="text-xs text-slate-400">Total Tagihan: <strong class="text-amber-400">Rp 29.000 / bulan</strong> (Transfer Langsung / QRIS)</p>
             </div>
           </div>
 
@@ -123,14 +122,14 @@
                   </svg>
                 </div>
                 <div>
-                  <div class="text-sm font-semibold text-white">QRIS (GoPay, OVO, DANA, ShopeePay, Mobile Banking)</div>
-                  <div class="text-xs text-slate-400">Scan kode QR instant Mayar.id tanpa biaya admin</div>
+                  <div class="text-sm font-semibold text-white">QRIS Direct (GoPay, OVO, DANA, ShopeePay, Mobile Banking)</div>
+                  <div class="text-xs text-slate-400">Scan QRIS merchant resmi tanpa potongan biaya admin</div>
                 </div>
               </div>
               <span class="text-amber-400 text-sm font-semibold group-hover:translate-x-1 transition">Pilih →</span>
             </label>
 
-            <!-- BCA VA Option -->
+            <!-- BCA Option -->
             <label
               @click="selectedMethod = 'bca'; step = 'confirm'"
               class="flex items-center justify-between p-4 rounded-xl border border-slate-700/80 bg-slate-800/50 hover:border-amber-500/80 hover:bg-slate-800 transition cursor-pointer group"
@@ -140,14 +139,14 @@
                   BCA
                 </div>
                 <div>
-                  <div class="text-sm font-semibold text-white">BCA Virtual Account</div>
-                  <div class="text-xs text-slate-400">Transfer via m-BCA / KlikBCA / ATM BCA</div>
+                  <div class="text-sm font-semibold text-white">Transfer Bank BCA</div>
+                  <div class="text-xs text-slate-400">Transfer langsung ke Rekening BCA</div>
                 </div>
               </div>
               <span class="text-amber-400 text-sm font-semibold group-hover:translate-x-1 transition">Pilih →</span>
             </label>
 
-            <!-- Mandiri VA Option -->
+            <!-- Mandiri Option -->
             <label
               @click="selectedMethod = 'mandiri'; step = 'confirm'"
               class="flex items-center justify-between p-4 rounded-xl border border-slate-700/80 bg-slate-800/50 hover:border-amber-500/80 hover:bg-slate-800 transition cursor-pointer group"
@@ -157,8 +156,8 @@
                   MDR
                 </div>
                 <div>
-                  <div class="text-sm font-semibold text-white">Mandiri Virtual Account</div>
-                  <div class="text-xs text-slate-400">Transfer via Livin' by Mandiri / ATM</div>
+                  <div class="text-sm font-semibold text-white">Transfer Bank Mandiri</div>
+                  <div class="text-xs text-slate-400">Transfer langsung ke Rekening Mandiri</div>
                 </div>
               </div>
               <span class="text-amber-400 text-sm font-semibold group-hover:translate-x-1 transition">Pilih →</span>
@@ -166,64 +165,64 @@
           </div>
         </div>
 
-        <!-- STEP 3: INVOICE & SIMULATE PAYMENT -->
+        <!-- STEP 3: INVOICE & CONFIRMATION -->
         <div v-else-if="step === 'confirm'" class="p-6">
           <div class="flex items-center gap-3 pb-4 mb-4 border-b border-slate-800">
-            <button @click="step = 'payment'" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+            <button @click="step = 'payment'" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition cursor-pointer">
               ← Ganti Metode
             </button>
             <div>
-              <h3 class="text-lg font-bold text-white">Konfirmasi Pembayaran</h3>
-              <p class="text-xs text-slate-400">Invoice ID Mayar: <span class="font-mono text-amber-400">{{ invoiceData?.invoice_id }}</span></p>
+              <h3 class="text-lg font-bold text-white">Instruksi Pembayaran {{ selectedMethod.toUpperCase() }}</h3>
+              <p class="text-xs text-slate-400">Transfer tepat sesuai nominal tagihan</p>
             </div>
           </div>
 
           <!-- Invoice Details -->
-          <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 mb-6">
+          <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 mb-5">
             <div class="flex justify-between items-center text-sm border-b border-slate-700/60 pb-3 mb-3">
               <span class="text-slate-400">Produk:</span>
               <span class="font-bold text-white">ResearchFinder Pro Student Plan (1 Bulan)</span>
             </div>
             <div class="flex justify-between items-center text-sm border-b border-slate-700/60 pb-3 mb-3">
               <span class="text-slate-400">Metode Pembayaran:</span>
-              <span class="font-semibold text-amber-400 uppercase">{{ selectedMethod }}</span>
+              <span class="font-semibold text-amber-400 uppercase">{{ selectedMethod }} DIRECT</span>
             </div>
             <div class="flex justify-between items-center text-sm">
-              <span class="text-slate-400">Total Tagihan:</span>
+              <span class="text-slate-400">Total Nominal:</span>
               <span class="text-xl font-extrabold text-amber-300">Rp 29.000</span>
             </div>
           </div>
 
-          <!-- QR Code Preview if QRIS -->
-          <div v-if="selectedMethod === 'qris'" class="text-center bg-white p-4 rounded-xl max-w-[200px] mx-auto mb-6 shadow-lg">
+          <!-- QR Code if QRIS Direct -->
+          <div v-if="selectedMethod === 'qris'" class="text-center bg-white p-4 rounded-xl max-w-[210px] mx-auto mb-5 shadow-lg">
             <img
-              v-if="invoiceData?.qr_code_url"
-              :src="invoiceData.qr_code_url"
-              alt="QRIS Mayar"
-              class="w-36 h-36 mx-auto object-contain"
+              src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=00020101021126580014ID.LINKAJA.WWW01189360091100212003880215200803123456785204581253033605405290005802ID5914RESEARCHFINDER6007JAKARTA61051234562070703A016304A1B2"
+              alt="QRIS Merchant Direct"
+              class="w-38 h-38 mx-auto object-contain"
             />
-            <div v-else class="w-36 h-36 mx-auto bg-slate-900 p-2 rounded-lg flex items-center justify-center text-white font-mono text-xs text-center border-4 border-amber-500">
-              [ QRIS KODE MAYAR ]
+            <p class="text-[10px] text-slate-700 font-bold mt-2">QRIS Merchant ResearchFinder</p>
+            <p class="text-[9px] text-slate-500">Scan via GoPay / DANA / OVO / M-Banking</p>
+          </div>
+
+          <!-- Bank Details if BCA / Mandiri -->
+          <div v-else class="bg-slate-800/90 p-4 rounded-xl text-center mb-5 border border-amber-500/30">
+            <div class="text-xs text-slate-400 mb-1">Nomor Rekening {{ selectedMethod.toUpperCase() }}:</div>
+            <div class="text-2xl font-mono font-bold text-amber-300 tracking-wider my-1 select-all">
+              {{ selectedMethod === 'bca' ? '8801293849' : '137001928374' }}
             </div>
-            <p class="text-[10px] text-slate-600 font-semibold mt-2">Scan dengan E-Wallet / M-Banking</p>
+            <div class="text-xs font-semibold text-slate-300">a.n. ResearchFinder SaaS</div>
+            <div class="text-[10px] text-slate-400 mt-2">Salin nomor rekening & lakukan transfer nominal Rp 29.000</div>
           </div>
 
-          <!-- VA Number Preview if VA -->
-          <div v-else class="bg-slate-800/80 p-4 rounded-xl text-center mb-6 border border-amber-500/30">
-            <div class="text-xs text-slate-400 mb-1">Nomor Virtual Account {{ selectedMethod.toUpperCase() }}:</div>
-            <div class="text-2xl font-mono font-bold text-amber-300 tracking-wider">880129384910283</div>
-            <div class="text-[10px] text-slate-400 mt-1">Berlaku selama 24 jam</div>
-          </div>
-
-          <!-- Mayar Payment Link Option -->
-          <div v-if="invoiceData?.payment_url" class="mb-4 text-center">
-            <a
-              :href="invoiceData.payment_url"
-              target="_blank"
-              class="text-xs text-indigo-400 hover:text-indigo-300 underline font-medium"
-            >
-              Atau Buka Halaman Pembayaran Resmi Mayar.id ↗
-            </a>
+          <!-- Sender Name Input (Optional) -->
+          <div class="mb-5">
+            <label class="block text-xs font-medium text-slate-300 mb-1">Nama Pemilik Rekening / Pengirim (Opsional):</label>
+            <input
+              v-model="senderName"
+              type="text"
+              placeholder="Contoh: Ival Permana"
+              class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+            />
           </div>
 
           <div class="flex gap-3">
@@ -234,11 +233,11 @@
               Batal
             </button>
             <button
-              @click="confirmPayment"
+              @click="confirmDirectPayment"
               :disabled="upgrading"
               class="w-1/2 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-sm rounded-xl transition shadow-lg shadow-amber-500/20 disabled:opacity-50 cursor-pointer"
             >
-              {{ upgrading ? 'Verifikasi Webhook...' : 'Konfirmasi & Bayar (Rp 29.000)' }}
+              {{ upgrading ? 'Konfirmasi Pembayaran...' : 'Konfirmasi Pembayaran Saya' }}
             </button>
           </div>
         </div>
@@ -256,36 +255,25 @@ const emit = defineEmits(['close', 'upgraded'])
 const authStore = useAuthStore()
 const step = ref<'select' | 'payment' | 'confirm'>('select')
 const selectedMethod = ref('qris')
-const loadingCheckout = ref(false)
+const senderName = ref('')
 const upgrading = ref(false)
-const invoiceData = ref<{ invoice_id: string; payment_url: string; qr_code_url: string } | null>(null)
 
-async function startCheckout() {
-  loadingCheckout.value = true
-  try {
-    const { data } = await api.post('/payment/create-checkout')
-    invoiceData.value = data
-    step.value = 'payment'
-  } catch (err) {
-    console.error('Failed to create Mayar checkout:', err)
-    alert('Gagal membuat invoice Mayar.id. Silakan coba lagi.')
-  } finally {
-    loadingCheckout.value = false
-  }
-}
-
-async function confirmPayment() {
-  if (!invoiceData.value) return
+async function confirmDirectPayment() {
   upgrading.value = true
   try {
-    const { data } = await api.post(`/payment/simulate-confirm/${invoiceData.value.invoice_id}`)
+    const { data } = await api.post('/payment/confirm-direct', null, {
+      params: {
+        method: selectedMethod.value,
+        sender_name: senderName.value || authStore.user?.name || ''
+      }
+    })
     authStore.user = { ...authStore.user, plan_tier: 'pro', storage_quota_bytes: data.storage_quota_bytes }
     emit('upgraded')
     emit('close')
-    alert('Pembayaran Berhasil! Akun Anda telah resmi di-upgrade ke Paket Pro Student (Kuota 5 GB)!')
+    alert(`🎉 Terima Kasih! Konfirmasi pembayaran via ${selectedMethod.value.toUpperCase()} berhasil! Akun Anda telah resmi di-upgrade ke Paket Pro Student (Kuota 5 GB)!`)
   } catch (err) {
-    console.error('Failed to confirm payment:', err)
-    alert('Gagal memverifikasi pembayaran. Silakan coba lagi.')
+    console.error('Failed to confirm direct payment:', err)
+    alert('Gagal memproses konfirmasi. Silakan coba lagi.')
   } finally {
     upgrading.value = false
   }

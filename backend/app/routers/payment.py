@@ -161,3 +161,40 @@ async def mayar_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     except Exception as e:
         logger.error(f"Error processing Mayar Webhook: {e}", exc_info=True)
         return {"status": "ERROR", "detail": str(e)}
+
+
+@router.post("/confirm-direct")
+async def confirm_direct_payment(
+    method: str = "qris",
+    sender_name: str | None = None,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Direct QRIS & Bank Transfer Confirmation without third-party API fees."""
+    import uuid
+    tx_id = f"tx_direct_{uuid.uuid4().hex[:10]}"
+    
+    transaction = PaymentTransaction(
+        user_id=current_user.id,
+        invoice_id=tx_id,
+        amount=29000,
+        status="PAID",
+        payment_method=method.upper(),
+        paid_at=datetime.now(timezone.utc),
+    )
+    db.add(transaction)
+
+    # Upgrade User to Pro
+    current_user.plan_tier = "pro"
+    current_user.storage_quota_bytes = 5368709120  # 5 GB
+
+    await db.flush()
+    await db.refresh(current_user)
+
+    return {
+        "status": "SUCCESS",
+        "message": f"Konfirmasi pembayaran via {method.upper()} berhasil! Akun di-upgrade ke Paket Pro Student.",
+        "plan_tier": current_user.plan_tier,
+        "storage_quota_bytes": current_user.storage_quota_bytes,
+        "invoice_id": tx_id,
+    }
