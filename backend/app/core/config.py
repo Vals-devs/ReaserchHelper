@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str = "gemini-3.5-flash-lite"
     SEMANTIC_SCHOLAR_API_KEY: str = ""
     UNPAYWALL_EMAIL: str = ""
+    MAYAR_API_KEY: str = ""
+    MAYAR_API_URL: str = "https://api.mayar.id/hl/v1/payment/create"
 
     # CORS
     CORS_ORIGINS: list[str] = [
