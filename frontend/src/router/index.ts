@@ -70,6 +70,12 @@ const router = createRouter({
       component: () => import('@/views/Settings.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/pricing',
+      name: 'pricing',
+      component: () => import('@/views/Pricing.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
   scrollBehavior() {
     return { top: 0 }
