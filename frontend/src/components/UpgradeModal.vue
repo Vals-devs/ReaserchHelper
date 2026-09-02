@@ -111,9 +111,15 @@ async function payWithMidtrans() {
   loading.value = true
   try {
     const { data } = await api.post('/payment/create-midtrans-snap')
-    const token = data.token
+    
+    if (data.auto_upgraded) {
+      await refreshUserStatus()
+      alert('🎉 Selamat! Akun Anda telah berhasil di-upgrade ke Paket Pro Student (Kuota 5 GB)!')
+      return
+    }
 
-    if (window.snap && token && !token.startsWith('snap_mock_')) {
+    const token = data.token
+    if (window.snap && token) {
       window.snap.pay(token, {
         onSuccess: async function () {
           await refreshUserStatus()

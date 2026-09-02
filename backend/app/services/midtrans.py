@@ -72,4 +72,5 @@ async def create_midtrans_snap_token(
         "token": mock_token,
         "redirect_url": f"https://app.sandbox.midtrans.com/snap/v2/vtweb/{mock_token}",
         "order_id": order_id,
+        "is_mock": True,
     }

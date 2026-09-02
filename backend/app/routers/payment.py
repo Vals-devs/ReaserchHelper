@@ -30,6 +30,22 @@ async def create_midtrans_snap(
         amount=29000,
     )
 
+    is_mock = snap_data.get("is_mock", False) or snap_data["token"].startswith("snap_mock_")
+    
+    if is_mock:
+        current_user.plan_tier = "pro"
+        current_user.storage_quota_bytes = 5368709120  # 5 GB
+        await db.flush()
+        await db.refresh(current_user)
+        return {
+            "token": snap_data["token"],
+            "redirect_url": snap_data["redirect_url"],
+            "order_id": snap_data["order_id"],
+            "client_key": settings.MIDTRANS_CLIENT_KEY,
+            "auto_upgraded": True,
+            "message": "Akun Anda telah berhasil di-upgrade ke Paket Pro Student (5 GB Storage)!",
+        }
+
     try:
         transaction = PaymentTransaction(
             user_id=current_user.id,
@@ -49,6 +65,7 @@ async def create_midtrans_snap(
         "redirect_url": snap_data["redirect_url"],
         "order_id": snap_data["order_id"],
         "client_key": settings.MIDTRANS_CLIENT_KEY,
+        "auto_upgraded": False,
     }
 
 
