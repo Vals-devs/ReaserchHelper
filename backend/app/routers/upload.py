@@ -67,10 +67,10 @@ async def upload_pdf(
         title_hint=pdf_data["title_hint"],
     )
 
-    # Check for duplicate uploaded paper by title (case-insensitive)
+    # Check for duplicate uploaded paper by title for THIS user (case-insensitive)
     normalized_title = metadata["title"].strip().lower()
     existing_check = await db.execute(
-        select(Paper).where(Paper.source == "uploaded")
+        select(Paper).where(Paper.source == "uploaded", Paper.user_id == current_user.id)
     )
     all_uploaded = existing_check.scalars().all()
     duplicate = None
@@ -103,6 +103,7 @@ async def upload_pdf(
         journal=metadata.get("journal", "Uploaded PDF"),
         accreditation=metadata.get("accreditation", "PDF Uploaded"),
         uploaded_file_path=str(file_path),
+        user_id=current_user.id,
         page_count=pdf_data["page_count"],
     )
     db.add(paper)
@@ -127,10 +128,10 @@ async def list_uploaded_papers(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List all uploaded papers."""
+    """List all uploaded papers belonging to the current logged in user."""
     result = await db.execute(
         select(Paper)
-        .where(Paper.source == "uploaded")
+        .where(Paper.source == "uploaded", Paper.user_id == current_user.id)
         .order_by(Paper.cached_at.desc())
     )
     papers = result.scalars().all()
@@ -156,9 +157,13 @@ async def delete_uploaded_paper(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Delete an uploaded paper and its PDF file."""
+    """Delete an uploaded paper and its PDF file belonging to the user."""
     result = await db.execute(
-        select(Paper).where(Paper.id == paper_id, Paper.source == "uploaded")
+        select(Paper).where(
+            Paper.id == paper_id,
+            Paper.source == "uploaded",
+            Paper.user_id == current_user.id,
+        )
     )
     paper = result.scalar_one_or_none()
     if not paper:

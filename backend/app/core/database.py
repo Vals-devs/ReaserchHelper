@@ -53,6 +53,7 @@ async def create_tables():
         for stmt in [
             "ALTER TABLE papers ADD COLUMN IF NOT EXISTS journal VARCHAR(255);",
             "ALTER TABLE papers ADD COLUMN IF NOT EXISTS accreditation VARCHAR(100);",
+            "ALTER TABLE papers ADD COLUMN IF NOT EXISTS user_id VARCHAR(36);",
         ]:
             try:
                 await conn.execute(text(stmt))

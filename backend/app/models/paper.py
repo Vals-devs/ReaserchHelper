@@ -31,6 +31,9 @@ class Paper(Base):
     journal: Mapped[str | None] = mapped_column(String(255), nullable=True)
     accreditation: Mapped[str | None] = mapped_column(String(100), nullable=True)
     uploaded_file_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    user_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=True
+    )
     page_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     cached_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
