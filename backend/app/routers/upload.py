@@ -157,7 +157,27 @@ async def get_storage_usage(
         select(Paper).where(Paper.source == "uploaded", Paper.user_id == current_user.id)
     )
     user_papers = user_papers_res.scalars().all()
-    used_bytes = sum(p.file_size_bytes or 0 for p in user_papers)
+    
+    used_bytes = 0
+    for p in user_papers:
+        if p.file_size_bytes and p.file_size_bytes > 0:
+            used_bytes += p.file_size_bytes
+        elif p.uploaded_file_path and os.path.exists(p.uploaded_file_path):
+            try:
+                sz = os.path.getsize(p.uploaded_file_path)
+                p.file_size_bytes = sz
+                used_bytes += sz
+            except Exception:
+                pass
+        elif p.full_text:
+            sz = len(p.full_text.encode("utf-8"))
+            used_bytes += sz
+
+    try:
+        await db.flush()
+    except Exception:
+        pass
+
     quota_bytes = getattr(current_user, "storage_quota_bytes", 104857600) or 104857600
     plan_tier = getattr(current_user, "plan_tier", "free") or "free"
 

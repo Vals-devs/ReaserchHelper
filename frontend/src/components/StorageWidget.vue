@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import api from '@/services/api'
 import UpgradeModal from './UpgradeModal.vue'
 
@@ -78,7 +78,16 @@ async function fetchUsage() {
   }
 }
 
+let timer: any = null
+
 onMounted(() => {
   fetchUsage()
+  window.addEventListener('storage-updated', fetchUsage)
+  timer = setInterval(fetchUsage, 5000)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('storage-updated', fetchUsage)
+  if (timer) clearInterval(timer)
 })
 </script>
