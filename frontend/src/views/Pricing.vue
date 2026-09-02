@@ -101,7 +101,7 @@
           @click="showModal = true"
           class="mt-8 w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold rounded-xl text-sm transition shadow-lg shadow-amber-500/25 cursor-pointer flex items-center justify-center gap-2"
         >
-          <span>{{ authStore.user?.plan_tier === 'pro' ? 'Akun Anda Saat Ini (Pro)' : 'Pilih Metode Pembayaran (Rp 29.000/bln)' }}</span>
+          <span>{{ authStore.user?.plan_tier === 'pro' ? 'Akun Anda Saat Ini (Pro)' : 'Bayar via Midtrans (Rp 29.000/bln)' }}</span>
           <span>→</span>
         </button>
       </div>
