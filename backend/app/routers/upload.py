@@ -48,21 +48,7 @@ async def upload_pdf(
             detail="File yang di-upload bukan dokumen PDF valid.",
         )
 
-    # Calculate current storage used by this user
-    user_papers_res = await db.execute(
-        select(Paper).where(Paper.source == "uploaded", Paper.user_id == current_user.id)
-    )
-    user_papers = user_papers_res.scalars().all()
-    current_used_bytes = sum(p.file_size_bytes or 0 for p in user_papers)
-    user_quota = getattr(current_user, "storage_quota_bytes", 104857600) or 104857600
-
-    if current_used_bytes + len(file_bytes) > user_quota:
-        used_mb = round(current_used_bytes / (1024 * 1024), 1)
-        quota_mb = round(user_quota / (1024 * 1024), 0)
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Kuota penyimpanan Anda ({quota_mb:.0f} MB) telah penuh ({used_mb} MB terpakai). Tingkatkan ke Paket Pro untuk mendapatkan kuota 5 GB!",
-        )
+    # Storage quota check disabled (All users have unlimited access)
 
     # Extract text from PDF
     try:

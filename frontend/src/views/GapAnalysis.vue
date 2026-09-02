@@ -147,12 +147,12 @@ async function loadAllCollectionPapers() {
 }
 
 const selectedCount = computed(() => selectedIds.value.size)
-const canAnalyze = computed(() => selectedCount.value >= 3 && selectedCount.value <= 10)
+const canAnalyze = computed(() => selectedCount.value >= 3 && selectedCount.value <= 50)
 
 function togglePaper(id: string) {
   const s = new Set(selectedIds.value)
   if (s.has(id)) s.delete(id)
-  else if (s.size < 10) s.add(id)
+  else if (s.size < 50) s.add(id)
   selectedIds.value = s
 }
 
@@ -163,7 +163,7 @@ function isSelected(id: string) {
 function selectAll() {
   const s = new Set(selectedIds.value)
   for (const p of allPapers.value) {
-    if (s.size >= 10) break
+    if (s.size >= 50) break
     s.add(p.id)
   }
   selectedIds.value = s
