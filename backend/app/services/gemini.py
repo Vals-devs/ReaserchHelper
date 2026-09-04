@@ -71,9 +71,9 @@ async def generate_content(
         logger.warning("GEMINI_API_KEY is not configured")
         return "[Gemini API key not configured]"
 
-    primary_model = model or settings.GEMINI_MODEL or "gemini-3.5-flash-lite"
+    primary_model = model or settings.GEMINI_MODEL or "gemini-2.0-flash"
     candidate_models = [primary_model]
-    for fallback in ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.6-flash", "gemini-flash-latest"]:
+    for fallback in ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"]:
         if fallback not in candidate_models:
             candidate_models.append(fallback)
 
@@ -100,10 +100,10 @@ async def generate_content(
 
     for current_model in candidate_models:
         url = f"{BASE_URL}/{current_model}:generateContent?key={settings.GEMINI_API_KEY}"
-        max_retries = 2
+        max_retries = 1
         for attempt in range(max_retries + 1):
             try:
-                async with httpx.AsyncClient(timeout=60) as client:
+                async with httpx.AsyncClient(timeout=45.0) as client:
                     resp = await client.post(
                         url,
                         json=payload,
@@ -114,7 +114,7 @@ async def generate_content(
                         break  # Try next candidate_model
 
                     if resp.status_code in (429, 503) and attempt < max_retries:
-                        wait_time = (attempt + 1) * 3.0
+                        wait_time = (attempt + 1) * 1.5
                         logger.warning(f"Gemini API ({current_model}) returned {resp.status_code}. Retrying in {wait_time}s...")
                         await asyncio.sleep(wait_time)
                         continue

@@ -21,7 +21,7 @@ class Settings(BaseSettings):
 
     # External APIs
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-3.5-flash-lite"
+    GEMINI_MODEL: str = "gemini-2.0-flash"
     SEMANTIC_SCHOLAR_API_KEY: str = ""
     UNPAYWALL_EMAIL: str = ""
 
