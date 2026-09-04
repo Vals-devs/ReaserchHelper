@@ -70,24 +70,23 @@ const router = createRouter({
       component: () => import('@/views/Settings.vue'),
       meta: { requiresAuth: true },
     },
-    {
-      path: '/pricing',
-      name: 'pricing',
-      component: () => import('@/views/Pricing.vue'),
-      meta: { requiresAuth: true },
-    },
   ],
   scrollBehavior() {
     return { top: 0 }
   },
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
   // Protected routes: redirect to landing if not authenticated
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { name: 'landing' }
+  }
+
+  // Auto-fetch user data if authenticated but user object not loaded yet
+  if (auth.isAuthenticated && !auth.user) {
+    await auth.fetchUser()
   }
 
   // Guest routes: redirect to dashboard if already logged in

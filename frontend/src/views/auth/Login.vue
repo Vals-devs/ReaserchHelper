@@ -27,7 +27,7 @@ async function handleLogin() {
   loading.value = true
   try {
     await auth.login(email.value, password.value)
-    router.push('/')
+    router.push('/dashboard')
   } catch (e: any) {
     error.value = getErrorMessage(e)
   } finally {

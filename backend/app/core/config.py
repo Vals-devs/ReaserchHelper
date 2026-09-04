@@ -25,11 +25,6 @@ class Settings(BaseSettings):
     SEMANTIC_SCHOLAR_API_KEY: str = ""
     UNPAYWALL_EMAIL: str = ""
 
-    # Midtrans Payment Gateway Configs
-    MIDTRANS_SERVER_KEY: str = "SB-Mid-server-wh5xPXluIyQ2fSbTyTwzWGG1"
-    MIDTRANS_CLIENT_KEY: str = "SB-Mid-client-law3uN3W_llPhHYd"
-    MIDTRANS_IS_PRODUCTION: bool = False
-
     # CORS
     CORS_ORIGINS: list[str] = [
         "http://localhost:5173",

@@ -60,36 +60,71 @@ function formatAuthors(authors: string[]): string {
     <h1 class="text-lg font-semibold text-[var(--color-text)]">Search Papers</h1>
     <p class="mt-0.5 text-sm text-[var(--color-text-sub)]">Cari dari Semantic Scholar dan arXiv secara bersamaan</p>
 
-    <!-- Search Bar -->
-    <div class="mt-4 flex items-center gap-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5">
-      <svg width="16" height="16" class="flex-shrink-0 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-      <input
-        v-model="searchQuery"
-        @keyup.enter="handleSearch"
-        type="text"
-        placeholder="Cari paper berdasarkan judul, keyword, atau topik..."
-        class="flex-1 bg-transparent text-sm text-[var(--color-text)] outline-none placeholder:text-[var(--color-text-muted)]"
-      />
-      <button @click="handleSearch" :disabled="papersStore.loading"
-        class="rounded-md bg-[var(--color-primary)] px-4 py-1.5 text-sm font-medium text-white transition hover:bg-[var(--color-primary-hover)] disabled:opacity-50">
-        {{ papersStore.loading ? 'Mencari...' : 'Cari' }}
+    <!-- Accessible & Responsive Search Bar -->
+    <form @submit.prevent="handleSearch" role="search" class="mt-4 flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1.5 shadow-sm transition-all focus-within:border-[var(--color-primary)] focus-within:ring-2 focus-within:ring-[var(--color-primary)]/20">
+      <div class="flex flex-1 items-center gap-2.5 pl-3">
+        <svg width="18" height="18" class="flex-shrink-0 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+        <input
+          id="search-input"
+          v-model="searchQuery"
+          type="search"
+          name="q"
+          autocomplete="off"
+          aria-label="Cari paper penelitian berdasarkan judul, keyword, atau topik"
+          placeholder="Cari judul paper, keyword, atau topik riset..."
+          class="w-full bg-transparent py-2 text-sm text-[var(--color-text)] outline-none placeholder:text-[var(--color-text-muted)]"
+        />
+        <button
+          v-if="searchQuery"
+          @click="searchQuery = ''"
+          type="button"
+          aria-label="Hapus pencarian"
+          class="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text)] rounded-md transition focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <button
+        type="submit"
+        :disabled="papersStore.loading"
+        aria-label="Mulai pencarian"
+        class="flex-shrink-0 rounded-lg bg-[var(--color-primary)] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[var(--color-primary-hover)] active:scale-[0.98] disabled:opacity-50 min-h-[40px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/30"
+      >
+        <span v-if="papersStore.loading" class="flex items-center gap-2">
+          <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+          Mencari...
+        </span>
+        <span v-else>Cari</span>
       </button>
-    </div>
+    </form>
 
-    <!-- Filters -->
-    <div class="mt-2.5 flex flex-wrap items-center gap-1.5">
-      <button v-for="opt in sourceOptions" :key="opt.value"
+    <!-- Filters (Accessible & Touch Friendly) -->
+    <div class="mt-3 flex flex-wrap items-center gap-2">
+      <button
+        v-for="opt in sourceOptions"
+        :key="opt.value"
         @click="selectedSource = opt.value"
-        class="rounded-md px-3 py-1 text-xs font-medium transition"
+        type="button"
+        :aria-pressed="selectedSource === opt.value"
+        class="rounded-lg px-3.5 py-1.5 text-xs font-medium transition min-h-[34px] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
         :class="selectedSource === opt.value
-          ? 'bg-[var(--color-primary-soft)] text-[var(--color-primary)]'
-          : 'bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-sub)] hover:bg-zinc-50'">
+          ? 'bg-[var(--color-primary)] text-white shadow-xs'
+          : 'bg-[var(--color-surface)] border border-[var(--color-border)] text-[var(--color-text-sub)] hover:border-[var(--color-text-muted)] hover:bg-[var(--color-bg)]'"
+      >
         {{ opt.label }}
       </button>
-      <select v-model="selectedField"
-        class="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-xs text-[var(--color-text-sub)] outline-none">
-        <option v-for="opt in fieldOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-      </select>
+      <div class="relative">
+        <select
+          v-model="selectedField"
+          aria-label="Filter berdasarkan bidang ilmu"
+          class="appearance-none rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] pl-3 pr-8 py-1.5 text-xs text-[var(--color-text-sub)] outline-none min-h-[34px] transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 hover:border-[var(--color-text-muted)]"
+        >
+          <option v-for="opt in fieldOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+        </select>
+        <svg width="12" height="12" class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
     </div>
 
     <!-- Error -->

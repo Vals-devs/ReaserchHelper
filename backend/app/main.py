@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import create_tables, engine
 from app.core.cache import init_redis
-from app.routers import auth, papers, collections, bibliography, history, ai, upload, dashboard, payment
+from app.routers import auth, papers, collections, bibliography, history, ai, upload, dashboard
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -25,14 +25,11 @@ async def lifespan(app: FastAPI):
 
     # Run database & storage maintenance tasks
     try:
-        from sqlalchemy import text
         from app.services.cleanup import purge_all_uploaded_papers, prune_stale_cache_papers, cleanup_orphan_files
         await purge_all_uploaded_papers()
         await prune_stale_cache_papers(days=14)
         await cleanup_orphan_files()
-        async with engine.begin() as conn:
-            await conn.execute(text("UPDATE users SET plan_tier = 'free', storage_quota_bytes = 104857600 WHERE email = 'ival@gmail.com';"))
-        logger.info("Database and storage maintenance complete. Account ival@gmail.com reset to free plan.")
+        logger.info("Database and storage maintenance complete.")
     except Exception as e:
         logger.warning(f"Maintenance task failed: {e}")
 
@@ -73,7 +70,6 @@ app.include_router(history.router, prefix="/api/history", tags=["History"])
 app.include_router(ai.router, prefix="/api/ai", tags=["AI"])
 app.include_router(upload.router, prefix="/api/upload", tags=["Upload"])
 app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
-app.include_router(payment.router, prefix="/api/payment", tags=["Payment"])
 
 
 @app.get("/api/health")

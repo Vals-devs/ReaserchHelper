@@ -659,28 +659,28 @@ function parseMarkdown(text: string): string {
         </div>
 
         <!-- 1. RINGKASAN EKSEKUTIF & PELUANG EMAS -->
-        <div class="mb-4 rounded-xl border border-indigo-500/40 bg-slate-900 p-5 shadow-md">
-          <div class="flex items-center gap-2 mb-2">
-            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-500/30 text-indigo-300 font-bold">
+        <div class="mb-4 rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-5 shadow-sm">
+          <div class="flex items-center gap-2 mb-2.5">
+            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--color-primary)] text-white text-sm">
               💡
             </div>
-            <h2 class="text-base font-bold text-indigo-300">Ringkasan & Peluang Emas Skripsi</h2>
+            <h2 class="text-base font-bold text-[var(--color-text)]">Ringkasan & Peluang Emas Skripsi</h2>
           </div>
-          <p class="text-sm text-slate-100 font-normal leading-relaxed m-0">
+          <p class="text-sm text-[var(--color-text-sub)] leading-relaxed m-0">
             {{ gapData.ringkasan }}
           </p>
         </div>
 
         <!-- 2. REKOMENDASI JUDUL PROPOSAL SKRIPSI / TESIS -->
-        <div v-if="gapData.rekomendasiJudul.length" class="mb-5 rounded-xl border border-amber-500/40 bg-slate-900 p-5 shadow-md">
+        <div v-if="gapData.rekomendasiJudul.length" class="mb-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm">
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
-              <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/30 text-amber-300 font-bold">
+              <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500 text-white text-sm">
                 🎓
               </div>
               <div>
-                <h2 class="text-base font-bold text-amber-300">Rekomendasi Judul Proposal Skripsi / Tesis</h2>
-                <p class="text-xs text-slate-300">Siap dipakai dan disetujui dosen pembimbing</p>
+                <h2 class="text-base font-bold text-[var(--color-text)]">Rekomendasi Judul Proposal Skripsi / Tesis</h2>
+                <p class="text-xs text-[var(--color-text-muted)]">Siap dipakai dan disetujui dosen pembimbing</p>
               </div>
             </div>
           </div>
@@ -689,43 +689,43 @@ function parseMarkdown(text: string): string {
             <div
               v-for="(r, i) in gapData.rekomendasiJudul"
               :key="i"
-              class="rounded-xl border border-amber-500/30 bg-slate-800 p-4 transition hover:border-amber-500/60 relative group"
+              class="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] p-4 transition hover:border-[var(--color-primary)]/40 hover:shadow-sm relative group"
             >
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                <div class="flex items-center gap-2">
-                  <span class="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/30 text-amber-200 text-xs font-extrabold">
+                <div class="flex items-start gap-2.5">
+                  <span class="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-primary)] text-white text-xs font-bold mt-0.5">
                     {{ i + 1 }}
                   </span>
-                  <h3 class="text-sm font-bold text-amber-200 leading-snug">{{ r.judul }}</h3>
+                  <h3 class="text-sm font-bold text-[var(--color-text)] leading-snug">{{ r.judul }}</h3>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-shrink-0">
                   <span
                     class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
                     :class="{
-                      'bg-emerald-500/30 text-emerald-200 border border-emerald-500/40': r.tingkat_kesulitan === 'Mudah',
-                      'bg-amber-500/30 text-amber-200 border border-amber-500/40': r.tingkat_kesulitan === 'Sedang',
-                      'bg-purple-500/30 text-purple-200 border border-purple-500/40': r.tingkat_kesulitan === 'Menantang'
+                      'bg-emerald-50 text-emerald-700 border border-emerald-200': r.tingkat_kesulitan === 'Mudah',
+                      'bg-amber-50 text-amber-700 border border-amber-200': r.tingkat_kesulitan === 'Sedang',
+                      'bg-violet-50 text-violet-700 border border-violet-200': r.tingkat_kesulitan === 'Menantang'
                     }"
                   >
                     Kesulitan: {{ r.tingkat_kesulitan }}
                   </span>
                   <button
                     @click="copyTitle(r.judul)"
-                    class="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded text-xs transition cursor-pointer flex items-center gap-1 shadow-sm"
+                    class="px-2.5 py-1 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold rounded text-xs transition cursor-pointer flex items-center gap-1 shadow-sm"
                   >
                     <span>Salin Judul</span>
                   </button>
                 </div>
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 pt-3 border-t border-slate-700/80 text-xs">
-                <div>
-                  <span class="text-amber-300 font-bold block mb-0.5">💡 Alasan Kebaruan (Novelty):</span>
-                  <p class="text-slate-100 m-0 leading-relaxed">{{ r.alasan_kebaruan }}</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 pt-3 border-t border-[var(--color-border)] text-xs">
+                <div class="bg-amber-50/60 rounded-lg p-3 border border-amber-100">
+                  <span class="text-amber-700 font-bold block mb-0.5">💡 Alasan Kebaruan (Novelty):</span>
+                  <p class="text-[var(--color-text-sub)] m-0 leading-relaxed">{{ r.alasan_kebaruan }}</p>
                 </div>
-                <div>
-                  <span class="text-cyan-300 font-bold block mb-0.5">🛠️ Metode Disarankan:</span>
-                  <p class="text-slate-100 m-0 leading-relaxed">{{ r.metode_disarankan }}</p>
+                <div class="bg-blue-50/60 rounded-lg p-3 border border-blue-100">
+                  <span class="text-blue-700 font-bold block mb-0.5">🛠️ Metode Disarankan:</span>
+                  <p class="text-[var(--color-text-sub)] m-0 leading-relaxed">{{ r.metode_disarankan }}</p>
                 </div>
               </div>
             </div>
@@ -733,14 +733,14 @@ function parseMarkdown(text: string): string {
         </div>
 
         <!-- 3. KARTU RUANG CELAH KOSONG (RESEARCH GAPS) -->
-        <div v-if="gapData.celah.length" class="mb-5 rounded-xl border border-slate-700 bg-slate-900 p-5 shadow-md">
+        <div v-if="gapData.celah.length" class="mb-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm">
           <div class="flex items-center gap-2 mb-4">
-            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-500/30 text-rose-300 font-bold">
+            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-500 text-white text-sm">
               🚩
             </div>
             <div>
-              <h2 class="text-base font-bold text-white">Ruang Celah Kosong (Research Gaps Unexplored)</h2>
-              <p class="text-xs text-slate-300">Hal-hal penting yang belum terjawab di penelitian-penelitian sebelumnya</p>
+              <h2 class="text-base font-bold text-[var(--color-text)]">Celah Kosong Penelitian (Research Gaps)</h2>
+              <p class="text-xs text-[var(--color-text-muted)]">Hal-hal penting yang belum terjawab di penelitian sebelumnya</p>
             </div>
           </div>
 
@@ -751,33 +751,33 @@ function parseMarkdown(text: string): string {
               :id="`gap-card-${i}`"
               class="rounded-xl border p-4 transition-all duration-300"
               :class="[
-                g.priority === 'Tinggi' || g.category?.includes('Goldmine') ? 'border-rose-500/40 bg-slate-800' : 'border-slate-700 bg-slate-800',
-                activeGapIndex === i ? 'ring-2 ring-amber-400 scale-[1.01]' : ''
+                g.priority === 'Tinggi' || g.category?.includes('Goldmine') ? 'border-rose-200 bg-rose-50/30' : 'border-[var(--color-border)] bg-[var(--color-bg)]',
+                activeGapIndex === i ? 'ring-2 ring-[var(--color-primary)] scale-[1.005]' : ''
               ]"
             >
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                  <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+                <h3 class="text-sm font-bold text-[var(--color-text)] flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-rose-500"></span>
                   {{ g.title }}
                 </h3>
                 <div class="flex items-center gap-2">
-                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/30 text-amber-200 border border-amber-500/40">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
                     ⭐ Novelty: {{ g.novelty_score || '9.0' }}/10
                   </span>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-rose-500/30 text-rose-200 border border-rose-500/40">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-violet-50 text-violet-700 border border-violet-200">
                     {{ g.category || 'Peluang Utama' }}
                   </span>
                 </div>
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 pt-3 border-t border-slate-700 text-xs">
-                <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
-                  <span class="text-rose-300 font-bold block mb-1">⚠️ Masalah / Kekurangan Saat Ini:</span>
-                  <p class="text-slate-100 m-0 leading-relaxed">{{ g.masalah_saat_ini }}</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 pt-3 border-t border-[var(--color-border)] text-xs">
+                <div class="bg-rose-50/60 p-3 rounded-lg border border-rose-100">
+                  <span class="text-rose-700 font-bold block mb-1">⚠️ Masalah / Kekurangan Saat Ini:</span>
+                  <p class="text-[var(--color-text-sub)] m-0 leading-relaxed">{{ g.masalah_saat_ini }}</p>
                 </div>
-                <div class="bg-slate-900 p-3 rounded-lg border border-slate-700">
-                  <span class="text-emerald-300 font-bold block mb-1">✨ Solusi & Peluang Kamu:</span>
-                  <p class="text-slate-100 m-0 leading-relaxed">{{ g.solusi_peluang }}</p>
+                <div class="bg-emerald-50/60 p-3 rounded-lg border border-emerald-100">
+                  <span class="text-emerald-700 font-bold block mb-1">✨ Solusi & Peluang Kamu:</span>
+                  <p class="text-[var(--color-text-sub)] m-0 leading-relaxed">{{ g.solusi_peluang }}</p>
                 </div>
               </div>
             </div>
@@ -787,35 +787,35 @@ function parseMarkdown(text: string): string {
         <!-- 4. PETA TOPIK DOMINAN & METODOLOGI -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
           <!-- Topik Dominan -->
-          <div v-if="gapData.topik.length" class="rounded-xl border border-slate-700 bg-slate-900 p-4">
+          <div v-if="gapData.topik.length" class="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
             <div class="flex items-center gap-2 mb-3">
-              <span class="text-cyan-300 font-bold">📊</span>
-              <h3 class="text-sm font-bold text-white">Topik yang Sudah Banyak Diteliti</h3>
+              <span class="text-[var(--color-primary)] font-bold">📊</span>
+              <h3 class="text-sm font-bold text-[var(--color-text)]">Topik yang Sudah Banyak Diteliti</h3>
             </div>
             <div class="space-y-2">
-              <div v-for="(t, i) in gapData.topik" :key="i" class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 text-xs">
+              <div v-for="(t, i) in gapData.topik" :key="i" class="p-2.5 rounded-lg bg-blue-50/50 border border-blue-100 text-xs">
                 <div class="flex justify-between items-center mb-1">
-                  <span class="font-bold text-cyan-300">{{ t.name }}</span>
-                  <span class="px-1.5 py-0.5 rounded bg-cyan-500/30 text-cyan-200 font-semibold text-[10px]">{{ t.count }} paper</span>
+                  <span class="font-bold text-[var(--color-primary)]">{{ t.name }}</span>
+                  <span class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 font-semibold text-[10px]">{{ t.count }} paper</span>
                 </div>
-                <p class="text-slate-200 m-0 leading-relaxed text-[11px]">{{ t.desc }}</p>
+                <p class="text-[var(--color-text-sub)] m-0 leading-relaxed text-[11px]">{{ t.desc }}</p>
               </div>
             </div>
           </div>
 
           <!-- Metodologi Dominan -->
-          <div v-if="gapData.metodologi.length" class="rounded-xl border border-slate-700 bg-slate-900 p-4">
+          <div v-if="gapData.metodologi.length" class="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
             <div class="flex items-center gap-2 mb-3">
-              <span class="text-purple-300 font-bold">🛠️</span>
-              <h3 class="text-sm font-bold text-white">Metodologi yang Dominan saat Ini</h3>
+              <span class="text-violet-600 font-bold">🛠️</span>
+              <h3 class="text-sm font-bold text-[var(--color-text)]">Metodologi yang Dominan saat Ini</h3>
             </div>
             <div class="space-y-2">
-              <div v-for="(m, i) in gapData.metodologi" :key="i" class="p-2.5 rounded-lg bg-slate-800 border border-slate-700 text-xs">
+              <div v-for="(m, i) in gapData.metodologi" :key="i" class="p-2.5 rounded-lg bg-violet-50/50 border border-violet-100 text-xs">
                 <div class="flex justify-between items-center mb-1">
-                  <span class="font-bold text-purple-300">{{ m.name }}</span>
-                  <span class="px-1.5 py-0.5 rounded bg-purple-500/30 text-purple-200 font-semibold text-[10px]">{{ m.freq }}</span>
+                  <span class="font-bold text-violet-700">{{ m.name }}</span>
+                  <span class="px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 font-semibold text-[10px]">{{ m.freq }}</span>
                 </div>
-                <p class="text-slate-200 m-0 leading-relaxed text-[11px]">{{ m.desc }}</p>
+                <p class="text-[var(--color-text-sub)] m-0 leading-relaxed text-[11px]">{{ m.desc }}</p>
               </div>
             </div>
           </div>

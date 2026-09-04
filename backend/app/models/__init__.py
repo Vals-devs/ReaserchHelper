@@ -12,4 +12,3 @@ from app.models.user import User  # noqa: F401, E402
 from app.models.paper import Paper, AISummary  # noqa: F401, E402
 from app.models.collection import Collection, CollectionPaper  # noqa: F401, E402
 from app.models.search_history import SearchHistory  # noqa: F401, E402
-from app.models.payment import PaymentTransaction  # noqa: F401, E402

@@ -56,7 +56,7 @@ async function handleRegister() {
       password: password.value,
       institution: institution.value || undefined,
     })
-    router.push('/')
+    router.push('/dashboard')
   } catch (e: any) {
     error.value = getErrorMessage(e)
   } finally {
