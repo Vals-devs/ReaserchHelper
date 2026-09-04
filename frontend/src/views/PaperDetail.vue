@@ -235,7 +235,7 @@ function parseMarkdown(text: string): string {
   let html = text.trim()
 
   // 1. Process blockquotes (> quote)
-  html = html.replace(/^(?:>|&gt;)\s*(.*?)$/gm, '<blockquote class="my-2 p-2.5 bg-blue-50/70 border-l-4 border-[var(--color-primary)] rounded-r text-xs sm:text-sm text-slate-800 font-medium leading-relaxed">$1</blockquote>')
+  html = html.replace(/^(?:>|&gt;)\s*(.*?)$/gm, '<blockquote class="my-2.5 p-3 bg-blue-50/70 border-l-4 border-[var(--color-primary)] rounded-r text-xs sm:text-sm text-slate-800 font-medium leading-relaxed">$1</blockquote>')
 
   // 2. Escape HTML special chars (except existing blockquote tags)
   html = html
@@ -247,9 +247,9 @@ function parseMarkdown(text: string): string {
   html = html.replace(/&lt;blockquote class="([^"]+)"&gt;(.*?)&lt;\/blockquote&gt;/g, '<blockquote class="$1">$2</blockquote>')
 
   // 3. Headings (#, ##, ###, ####)
-  html = html.replace(/^####?\s+(.*?)$/gm, '<h4 class="font-bold text-xs sm:text-sm text-slate-900 mt-2.5 mb-1 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)]"></span>$1</h4>')
-  html = html.replace(/^###?\s+(.*?)$/gm, '<h3 class="font-bold text-xs sm:text-sm text-slate-900 mt-3 mb-1 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)]"></span>$1</h3>')
-  html = html.replace(/^#\s+(.*?)$/gm, '<h2 class="font-bold text-sm sm:text-base text-slate-900 mt-3.5 mb-1.5">$1</h2>')
+  html = html.replace(/^####?\s+(.*?)$/gm, '<h4 class="font-bold text-xs sm:text-sm text-slate-900 mt-3 mb-1.5 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)]"></span>$1</h4>')
+  html = html.replace(/^###?\s+(.*?)$/gm, '<h3 class="font-bold text-xs sm:text-sm text-slate-900 mt-3.5 mb-1.5 flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-[var(--color-primary)]"></span>$1</h3>')
+  html = html.replace(/^#\s+(.*?)$/gm, '<h2 class="font-bold text-sm sm:text-base text-slate-900 mt-4 mb-2">$1</h2>')
 
   // Clean up any remaining orphan leading ### or #
   html = html.replace(/^#{1,4}\s*/gm, '')
@@ -260,39 +260,14 @@ function parseMarkdown(text: string): string {
   html = html.replace(/\*(.*?)\*/g, '<em class="italic text-slate-700">$1</em>')
   html = html.replace(/`(.*?)`/g, '<code class="bg-slate-100 text-blue-700 px-1.5 py-0.5 rounded font-mono text-[11px] border border-slate-200">$1</code>')
 
-  // 5. Unordered & Ordered Lists
-  const lines = html.split('\n')
-  let inList = false
-  const processedLines = lines.map(line => {
-    const trimmed = line.trim()
-    if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
-      const content = trimmed.substring(2)
-      if (!inList) {
-        inList = true
-        return `<ul class="list-disc pl-4 space-y-1 my-1 text-slate-800"><li>${content}</li>`
-      }
-      return `<li>${content}</li>`
-    } else if (/^\d+\.\s+/.test(trimmed)) {
-      const content = trimmed.replace(/^\d+\.\s+/, '')
-      if (!inList) {
-        inList = true
-        return `<ol class="list-decimal pl-4 space-y-1 my-1 text-slate-800"><li>${content}</li>`
-      }
-      return `<li>${content}</li>`
-    } else {
-      if (inList) {
-        inList = false
-        return `</ul>\n${line}`
-      }
-      return line
-    }
-  })
+  // 5. Numbered Points (Preserve actual numbers 1, 2, 3... with clean badges)
+  html = html.replace(/^(\d+)\.\s+(.*?)$/gm, '<div class="mt-3 mb-1 text-slate-900 text-xs sm:text-sm font-semibold flex items-start gap-2 leading-snug"><span class="flex-shrink-0 inline-flex items-center justify-center w-5 h-5 rounded bg-blue-50 text-[var(--color-primary)] border border-blue-200 text-xs font-bold">$1</span><span class="flex-1">$2</span></div>')
 
-  if (inList) {
-    processedLines.push('</ul>')
-  }
+  // 6. Bullet Points
+  html = html.replace(/^[*-]\s+(.*?)$/gm, '<div class="my-1 pl-1 text-slate-800 text-xs sm:text-sm flex items-start gap-2 leading-relaxed"><span class="flex-shrink-0 text-[var(--color-primary)] font-bold mt-0.5">•</span><span class="flex-1">$1</span></div>')
 
-  html = processedLines.join('\n')
+  // 7. Line breaks & paragraph spacing
+  html = html.replace(/\n\n+/g, '<div class="h-2"></div>')
   html = html.replace(/\n/g, '<br>')
   return html
 }
