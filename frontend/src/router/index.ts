@@ -8,7 +8,7 @@ const router = createRouter({
       path: '/',
       name: 'landing',
       component: () => import('@/views/Landing.vue'),
-      meta: { hideSidebar: true, guest: true },
+      meta: { hideSidebar: true },
     },
     {
       path: '/login',

@@ -116,13 +116,20 @@ function copyDemoBib() {
           <span class="text-base font-bold tracking-tight bg-gradient-to-r from-zinc-950 to-zinc-700 bg-clip-text text-transparent">ResearchFinder</span>
         </div>
         <div class="flex items-center gap-3">
-          <router-link to="/login" class="rounded-md px-3.5 py-1.5 text-xs font-semibold text-[var(--color-text-sub)] transition hover:text-[var(--color-text)]">
-            Masuk
-          </router-link>
-          <button @click="getStarted"
-            class="rounded-md bg-[var(--color-primary)] px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[var(--color-primary-hover)] cursor-pointer">
-            Mulai Gratis
-          </button>
+          <template v-if="auth.isAuthenticated">
+            <router-link to="/dashboard" class="rounded-md bg-[var(--color-primary)] px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[var(--color-primary-hover)] cursor-pointer">
+              Buka Dashboard →
+            </router-link>
+          </template>
+          <template v-else>
+            <router-link to="/login" class="rounded-md px-3.5 py-1.5 text-xs font-semibold text-[var(--color-text-sub)] transition hover:text-[var(--color-text)]">
+              Masuk
+            </router-link>
+            <button @click="getStarted"
+              class="rounded-md bg-[var(--color-primary)] px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[var(--color-primary-hover)] cursor-pointer">
+              Mulai Gratis
+            </button>
+          </template>
         </div>
       </div>
     </nav>
