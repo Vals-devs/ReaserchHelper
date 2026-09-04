@@ -85,21 +85,21 @@ function copyDemoBib() {
 
 <template>
   <div class="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] overflow-hidden relative font-sans">
-    <!-- Ambient light glows -->
-    <div class="absolute -top-40 -left-40 w-[500px] h-[500px] bg-blue-400/10 blur-[130px] rounded-full pointer-events-none animate-float"></div>
-    <div class="absolute top-1/3 -right-40 w-[600px] h-[600px] bg-indigo-400/10 blur-[140px] rounded-full pointer-events-none animate-float" style="animation-delay: 2s"></div>
-    <div class="absolute -bottom-40 left-1/4 w-[500px] h-[500px] bg-violet-400/80 opacity-[0.03] blur-[150px] rounded-full pointer-events-none"></div>
+    <!-- Ambient light glows (GPU-accelerated float) -->
+    <div class="absolute -top-40 -left-40 w-[550px] h-[550px] bg-blue-500/10 blur-[130px] rounded-full pointer-events-none animate-float-1"></div>
+    <div class="absolute top-1/3 -right-40 w-[600px] h-[600px] bg-indigo-500/10 blur-[140px] rounded-full pointer-events-none animate-float-2"></div>
+    <div class="absolute -bottom-40 left-1/4 w-[500px] h-[500px] bg-violet-500/10 blur-[150px] rounded-full pointer-events-none animate-float-3"></div>
 
     <!-- Navbar -->
-    <nav class="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-surface)]/80 backdrop-blur-md">
+    <nav class="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-surface)]/80 backdrop-blur-md transition-all duration-300">
       <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
         <div class="flex items-center gap-3">
-          <img src="@/assets/logo.png" class="h-11 w-11 object-contain rounded-lg" alt="ResearchFinder Logo" />
+          <img src="@/assets/logo.png" class="h-11 w-11 object-contain rounded-lg transition-transform duration-300 hover:scale-105" alt="ResearchFinder Logo" />
           <span class="text-base font-bold tracking-tight bg-gradient-to-r from-zinc-950 to-zinc-700 bg-clip-text text-transparent">ResearchFinder</span>
         </div>
         <div class="flex items-center gap-3">
           <template v-if="auth.isAuthenticated">
-            <router-link to="/dashboard" class="rounded-md bg-[var(--color-primary)] px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[var(--color-primary-hover)] cursor-pointer">
+            <router-link to="/dashboard" class="rounded-md bg-[var(--color-primary)] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all duration-200 hover:bg-[var(--color-primary-hover)] hover:shadow-md cursor-pointer">
               Buka Dashboard →
             </router-link>
           </template>
@@ -108,7 +108,7 @@ function copyDemoBib() {
               Masuk
             </router-link>
             <button @click="getStarted"
-              class="rounded-md bg-[var(--color-primary)] px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[var(--color-primary-hover)] cursor-pointer">
+              class="rounded-md bg-[var(--color-primary)] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all duration-200 hover:bg-[var(--color-primary-hover)] hover:shadow-md cursor-pointer">
               Mulai Gratis
             </button>
           </template>
@@ -119,11 +119,11 @@ function copyDemoBib() {
     <!-- Hero -->
     <section class="relative pt-16 pb-12 overflow-hidden">
       <!-- Subtle dot grid background -->
-      <div class="absolute inset-0 opacity-[0.02] pointer-events-none" style="background-image: radial-gradient(circle, #18181b 1.5px, transparent 1.5px); background-size: 30px 30px;"></div>
+      <div class="absolute inset-0 opacity-[0.03] pointer-events-none" style="background-image: radial-gradient(circle, #18181b 1.5px, transparent 1.5px); background-size: 30px 30px;"></div>
 
       <div class="relative mx-auto max-w-4xl px-6 text-center">
         <!-- Badge -->
-        <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-1.5 text-[11px] font-semibold text-[var(--color-text-sub)] shadow-sm">
+        <div class="animate-enter mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-1.5 text-[11px] font-semibold text-[var(--color-text-sub)] shadow-sm hover:border-zinc-300 transition-colors">
           <span class="relative flex h-2 w-2">
             <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
             <span class="relative inline-flex h-2 w-2 rounded-full bg-blue-500"></span>
@@ -132,29 +132,29 @@ function copyDemoBib() {
         </div>
 
         <!-- Headline -->
-        <h1 class="text-4xl font-extrabold leading-[1.15] tracking-tight text-[var(--color-text)] sm:text-5xl lg:text-6xl">
+        <h1 class="animate-enter delay-100 text-4xl font-extrabold leading-[1.15] tracking-tight text-[var(--color-text)] sm:text-5xl lg:text-6xl">
           Temukan &amp; Pahami<br>
-          <span class="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">Paper Ilmiah</span> Lebih Cepat
+          <span class="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent animate-shimmer">Paper Ilmiah</span> Lebih Cepat
         </h1>
 
         <!-- Subtext -->
-        <p class="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-[var(--color-text-sub)] sm:text-base">
+        <p class="animate-enter delay-200 mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-[var(--color-text-sub)] sm:text-base">
           Platform riset akademik modern untuk membantu mahasiswa menemukan, meringkas, dan menganalisis paper ilmiah dari 
           <span class="text-zinc-950 font-semibold">Semantic Scholar</span> dan <span class="text-zinc-950 font-semibold">arXiv</span> — dilengkapi AI chat asisten, deteksi celah riset, dan bibliografi otomatis.
         </p>
 
         <!-- CTA -->
-        <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <div class="animate-enter delay-300 mt-8 flex flex-wrap items-center justify-center gap-3">
           <button @click="getStarted"
-            class="animate-pulse-subtle rounded-md bg-[var(--color-primary)] px-6 py-3 text-xs font-bold text-white shadow-md transition hover:bg-[var(--color-primary-hover)] cursor-pointer">
+            class="animate-pulse-subtle rounded-md bg-[var(--color-primary)] px-6 py-3 text-xs font-bold text-white shadow-md transition-all duration-200 hover:bg-[var(--color-primary-hover)] cursor-pointer">
             Mulai Sekarang — Gratis
           </button>
           <router-link to="/login"
-            class="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-3 text-xs font-bold text-[var(--color-text-sub)] transition hover:bg-zinc-50 shadow-sm">
+            class="rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-3 text-xs font-bold text-[var(--color-text-sub)] transition-all duration-200 hover:bg-zinc-50 hover:text-[var(--color-text)] shadow-sm">
             Masuk ke Akun
           </router-link>
         </div>
-        <p class="mt-4 text-[11px] text-[var(--color-text-muted)]">Tanpa kartu kredit · Integrasi langsung API akademik</p>
+        <p class="animate-enter delay-400 mt-4 text-[11px] text-[var(--color-text-muted)]">Tanpa kartu kredit · Integrasi langsung API akademik</p>
       </div>
     </section>
 
@@ -433,8 +433,8 @@ function copyDemoBib() {
 
       <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <!-- Feature 1 -->
-        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden">
-          <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 hover-lift relative overflow-hidden">
+          <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 transition-transform duration-300 group-hover:scale-110">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
           </div>
           <h3 class="text-sm font-bold text-[var(--color-text)]">Pencarian Multi-Sumber</h3>
@@ -448,8 +448,8 @@ function copyDemoBib() {
         </div>
 
         <!-- Feature 2 -->
-        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden">
-          <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
+        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 hover-lift relative overflow-hidden">
+          <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-violet-50 text-violet-600 transition-transform duration-300 group-hover:scale-110">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m-8-9H3m18 0h-1"/><circle cx="12" cy="12" r="4"/><path d="M17.66 6.34l-.71.71M7.05 16.95l-.71.71m0-12.02l.71.71m9.9 9.9l.71.71"/></svg>
           </div>
           <h3 class="text-sm font-bold text-[var(--color-text)]">AI Paper Summarizer</h3>
@@ -463,8 +463,8 @@ function copyDemoBib() {
         </div>
 
         <!-- Feature 3 -->
-        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden">
-          <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
+        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 hover-lift relative overflow-hidden">
+          <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-rose-50 text-rose-600 transition-transform duration-300 group-hover:scale-110">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
           </div>
           <h3 class="text-sm font-bold text-[var(--color-text)]">Research Gap Analyzer</h3>
@@ -478,8 +478,8 @@ function copyDemoBib() {
         </div>
 
         <!-- Feature 4 -->
-        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden">
-          <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 hover-lift relative overflow-hidden">
+          <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 transition-transform duration-300 group-hover:scale-110">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           </div>
           <h3 class="text-sm font-bold text-[var(--color-text)]">Upload PDF &amp; Metadata Extract</h3>
@@ -493,8 +493,8 @@ function copyDemoBib() {
         </div>
 
         <!-- Feature 5 -->
-        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden">
-          <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-sky-50 text-sky-600">
+        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 hover-lift relative overflow-hidden">
+          <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-sky-50 text-sky-600 transition-transform duration-300 group-hover:scale-110">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
           </div>
           <h3 class="text-sm font-bold text-[var(--color-text)]">Translate &amp; Explain</h3>
@@ -508,8 +508,8 @@ function copyDemoBib() {
         </div>
 
         <!-- Feature 6 -->
-        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden">
-          <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 hover-lift relative overflow-hidden">
+          <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 transition-transform duration-300 group-hover:scale-110">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z"/></svg>
           </div>
           <h3 class="text-sm font-bold text-[var(--color-text)]">Koleksi Terstruktur</h3>
