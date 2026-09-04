@@ -14,24 +14,6 @@ function getStarted() {
   }
 }
 
-// Scroll-triggered reveal animation
-onMounted(() => {
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('is-visible')
-        }
-      })
-    },
-    { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
-  )
-
-  document.querySelectorAll('.reveal').forEach((el) => observer.observe(el))
-
-  onUnmounted(() => observer.disconnect())
-})
-
 // Interactive Demo State
 const activeDemoTab = ref<'search' | 'summary' | 'gap' | 'bib'>('search')
 
@@ -141,7 +123,7 @@ function copyDemoBib() {
 
       <div class="relative mx-auto max-w-4xl px-6 text-center">
         <!-- Badge -->
-        <div class="animate-fade-up mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-1.5 text-[11px] font-semibold text-[var(--color-text-sub)] shadow-sm">
+        <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-1.5 text-[11px] font-semibold text-[var(--color-text-sub)] shadow-sm">
           <span class="relative flex h-2 w-2">
             <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
             <span class="relative inline-flex h-2 w-2 rounded-full bg-blue-500"></span>
@@ -150,19 +132,19 @@ function copyDemoBib() {
         </div>
 
         <!-- Headline -->
-        <h1 class="animate-fade-up delay-100 text-4xl font-extrabold leading-[1.15] tracking-tight text-[var(--color-text)] sm:text-5xl lg:text-6xl">
+        <h1 class="text-4xl font-extrabold leading-[1.15] tracking-tight text-[var(--color-text)] sm:text-5xl lg:text-6xl">
           Temukan &amp; Pahami<br>
           <span class="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">Paper Ilmiah</span> Lebih Cepat
         </h1>
 
         <!-- Subtext -->
-        <p class="animate-fade-up delay-200 mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-[var(--color-text-sub)] sm:text-base">
+        <p class="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-[var(--color-text-sub)] sm:text-base">
           Platform riset akademik modern untuk membantu mahasiswa menemukan, meringkas, dan menganalisis paper ilmiah dari 
           <span class="text-zinc-950 font-semibold">Semantic Scholar</span> dan <span class="text-zinc-950 font-semibold">arXiv</span> — dilengkapi AI chat asisten, deteksi celah riset, dan bibliografi otomatis.
         </p>
 
         <!-- CTA -->
-        <div class="animate-fade-up delay-300 mt-8 flex flex-wrap items-center justify-center gap-3">
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
           <button @click="getStarted"
             class="animate-pulse-subtle rounded-md bg-[var(--color-primary)] px-6 py-3 text-xs font-bold text-white shadow-md transition hover:bg-[var(--color-primary-hover)] cursor-pointer">
             Mulai Sekarang — Gratis
@@ -172,19 +154,19 @@ function copyDemoBib() {
             Masuk ke Akun
           </router-link>
         </div>
-        <p class="animate-fade-in delay-500 mt-4 text-[11px] text-[var(--color-text-muted)]">Tanpa kartu kredit · Integrasi langsung API akademik</p>
+        <p class="mt-4 text-[11px] text-[var(--color-text-muted)]">Tanpa kartu kredit · Integrasi langsung API akademik</p>
       </div>
     </section>
 
     <!-- Interactive Product Tour (WOW factor) -->
     <section class="max-w-5xl mx-auto px-6 py-12">
-      <div class="reveal mb-8 text-center">
+      <div class="mb-8 text-center">
         <h2 class="text-2xl font-bold tracking-tight text-[var(--color-text)]">Uji Fitur AI Secara Langsung</h2>
         <p class="mt-1.5 text-xs text-[var(--color-text-sub)]">Rasakan kecanggihan asisten riset ResearchFinder melalui simulasi interaktif di bawah ini</p>
       </div>
 
       <!-- Demo Box -->
-      <div class="reveal rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[460px]">
+      <div class="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[460px]">
         
         <!-- Left Side: Simulator Tabs -->
         <div class="md:col-span-4 border-r border-[var(--color-border)] bg-zinc-50/50 p-5 flex flex-col justify-between">
@@ -444,14 +426,14 @@ function copyDemoBib() {
 
     <!-- Features Grid -->
     <section class="max-w-6xl mx-auto px-6 py-16">
-      <div class="reveal mb-12 text-center">
+      <div class="mb-12 text-center">
         <h2 class="text-2xl font-bold tracking-tight text-[var(--color-text)] sm:text-3xl">Fitur Unggulan Mahasiswa</h2>
         <p class="mt-2 text-sm text-[var(--color-text-sub)]">Dirancang khusus untuk mempermudah pengerjaan Skripsi, Thesis, dan Tugas Akhir</p>
       </div>
 
-      <div class="reveal-stagger grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <!-- Feature 1 -->
-        <div class="reveal group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden" style="--stagger-index: 0">
+        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden">
           <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
           </div>
@@ -466,7 +448,7 @@ function copyDemoBib() {
         </div>
 
         <!-- Feature 2 -->
-        <div class="reveal group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden" style="--stagger-index: 1">
+        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden">
           <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-violet-50 text-violet-600">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m-8-9H3m18 0h-1"/><circle cx="12" cy="12" r="4"/><path d="M17.66 6.34l-.71.71M7.05 16.95l-.71.71m0-12.02l.71.71m9.9 9.9l.71.71"/></svg>
           </div>
@@ -481,7 +463,7 @@ function copyDemoBib() {
         </div>
 
         <!-- Feature 3 -->
-        <div class="reveal group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden" style="--stagger-index: 2">
+        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden">
           <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
           </div>
@@ -496,7 +478,7 @@ function copyDemoBib() {
         </div>
 
         <!-- Feature 4 -->
-        <div class="reveal group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden" style="--stagger-index: 3">
+        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden">
           <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
           </div>
@@ -511,7 +493,7 @@ function copyDemoBib() {
         </div>
 
         <!-- Feature 5 -->
-        <div class="reveal group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden" style="--stagger-index: 4">
+        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden">
           <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-sky-50 text-sky-600">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
           </div>
@@ -526,7 +508,7 @@ function copyDemoBib() {
         </div>
 
         <!-- Feature 6 -->
-        <div class="reveal group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden" style="--stagger-index: 5">
+        <div class="group rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 transition-all duration-300 hover:border-zinc-300 hover:shadow-md relative overflow-hidden">
           <div class="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M4 4.5A2.5 2.5 0 016.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15z"/></svg>
           </div>
@@ -545,27 +527,27 @@ function copyDemoBib() {
     <!-- How it works (Cleaned up and modernized) -->
     <section class="border-t border-[var(--color-border)] bg-zinc-50/60 py-16 relative">
       <div class="mx-auto max-w-4xl px-6">
-        <div class="reveal mb-12 text-center">
+        <div class="mb-12 text-center">
           <h2 class="text-2xl font-bold tracking-tight text-[var(--color-text)] sm:text-3xl">Langkah Praktis Riset</h2>
           <p class="mt-2 text-sm text-[var(--color-text-sub)]">Selesaikan kajian pustaka Anda dalam 3 tahapan sistematis</p>
         </div>
 
-        <div class="reveal-stagger grid gap-8 sm:grid-cols-3">
-          <div class="reveal text-center relative" style="--stagger-index: 0">
+        <div class="grid gap-8 sm:grid-cols-3">
+          <div class="text-center relative">
             <div class="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-sm font-bold text-white shadow-md shadow-blue-500/20">1</div>
             <h3 class="text-sm font-bold text-[var(--color-text)]">Cari &amp; Organisasikan</h3>
             <p class="mt-2 text-xs leading-relaxed text-[var(--color-text-sub)]">
               Kumpulkan data riset akademik secara instan melalui pencarian internal atau upload PDF paper fisik milik Anda ke koleksi.
             </p>
           </div>
-          <div class="reveal text-center relative" style="--stagger-index: 1">
+          <div class="text-center relative">
             <div class="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-violet-600 text-sm font-bold text-white shadow-md shadow-violet-500/20">2</div>
             <h3 class="text-sm font-bold text-[var(--color-text)]">Pahami Cepat via AI</h3>
             <p class="mt-2 text-xs leading-relaxed text-[var(--color-text-sub)]">
               Gunakan Summarizer AI untuk mengekstrak temuan dan metodologi, serta fitur Chat Q&amp;A untuk menanyakan detail metodologi secara asisten pribadi.
             </p>
           </div>
-          <div class="reveal text-center relative" style="--stagger-index: 2">
+          <div class="text-center relative">
             <div class="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-600 text-sm font-bold text-white shadow-md shadow-emerald-500/20">3</div>
             <h3 class="text-sm font-bold text-[var(--color-text)]">Temukan Celah Riset</h3>
             <p class="mt-2 text-xs leading-relaxed text-[var(--color-text-sub)]">
@@ -578,10 +560,10 @@ function copyDemoBib() {
 
     <!-- Tech stack badges -->
     <section class="max-w-4xl mx-auto px-6 py-16">
-      <div class="reveal mb-8 text-center">
+      <div class="mb-8 text-center">
         <h2 class="text-base font-bold text-[var(--color-text-sub)] uppercase tracking-wider">TEKNOLOGI KELAS AKADEMIK</h2>
       </div>
-      <div class="reveal flex flex-wrap items-center justify-center gap-2 max-w-2xl mx-auto">
+      <div class="flex flex-wrap items-center justify-center gap-2 max-w-2xl mx-auto">
         <span v-for="tech in ['Vue 3', 'TypeScript', 'FastAPI', 'Tailwind CSS v4', 'Groq LLaMA 3', 'Semantic Scholar API', 'arXiv API', 'PyMuPDF', 'SQLAlchemy', 'PostgreSQL', 'Docker']"
           :key="tech"
           class="rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-1.5 text-xs font-semibold text-[var(--color-text-sub)] shadow-sm transition-all duration-300 hover:border-zinc-400 hover:text-[var(--color-text)]">
@@ -593,7 +575,7 @@ function copyDemoBib() {
     <!-- CTA bottom (Premium Banner) -->
     <section class="border-t border-[var(--color-border)] bg-gradient-to-b from-[var(--color-surface)] to-zinc-50 py-20 relative overflow-hidden">
       <div class="absolute inset-0 bg-grid-pattern opacity-[0.01]"></div>
-      <div class="reveal mx-auto max-w-2xl px-6 text-center relative z-10 space-y-6">
+      <div class="mx-auto max-w-2xl px-6 text-center relative z-10 space-y-6">
         <h2 class="text-3xl font-extrabold tracking-tight text-[var(--color-text)] sm:text-4xl">Siap Mempercepat Riset Skripsi Anda?</h2>
         <p class="text-sm leading-relaxed text-[var(--color-text-sub)] max-w-md mx-auto">
           Bergabung sekarang bersama mahasiswa Indonesia lainnya dan temukan kemudahan menyusun kajian pustaka dengan kecerdasan AI.
