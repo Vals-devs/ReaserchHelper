@@ -232,16 +232,35 @@ function goBack() {
 
 function parseMarkdown(text: string): string {
   if (!text) return ''
-  let html = text
+  let html = text.trim()
+
+  // 1. Process blockquotes (> quote)
+  html = html.replace(/^(?:>|&gt;)\s*(.*?)$/gm, '<blockquote class="my-2 p-2.5 bg-amber-500/10 border-l-4 border-amber-500 rounded-r text-xs sm:text-sm text-slate-100 font-medium leading-relaxed">$1</blockquote>')
+
+  // 2. Escape HTML special chars (except existing blockquote tags)
+  html = html
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-  
-  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-  html = html.replace(/__(.*?)__/g, '<strong>$1</strong>')
-  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>')
-  html = html.replace(/`(.*?)`/g, '<code class="bg-zinc-100 px-1 rounded text-red-600 font-mono text-[11px]">$1</code>')
-  
+
+  // Restore blockquote tags if escaped
+  html = html.replace(/&lt;blockquote class="([^"]+)"&gt;(.*?)&lt;\/blockquote&gt;/g, '<blockquote class="$1">$2</blockquote>')
+
+  // 3. Headings (#, ##, ###, ####)
+  html = html.replace(/^####?\s+(.*?)$/gm, '<h4 class="font-bold text-xs sm:text-sm text-amber-300 mt-2.5 mb-1 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>$1</h4>')
+  html = html.replace(/^###?\s+(.*?)$/gm, '<h3 class="font-bold text-xs sm:text-sm text-amber-300 mt-3 mb-1 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>$1</h3>')
+  html = html.replace(/^#\s+(.*?)$/gm, '<h2 class="font-bold text-sm sm:text-base text-white mt-3.5 mb-1.5">$1</h2>')
+
+  // Clean up any remaining orphan leading ### or #
+  html = html.replace(/^#{1,4}\s*/gm, '')
+
+  // 4. Bold, Italic & Code
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-amber-200">$1</strong>')
+  html = html.replace(/__(.*?)__/g, '<strong class="font-bold text-amber-200">$1</strong>')
+  html = html.replace(/\*(.*?)\*/g, '<em class="italic text-slate-200">$1</em>')
+  html = html.replace(/`(.*?)`/g, '<code class="bg-slate-800 px-1.5 py-0.5 rounded text-amber-300 font-mono text-[11px] border border-slate-700">$1</code>')
+
+  // 5. Unordered & Ordered Lists
   const lines = html.split('\n')
   let inList = false
   const processedLines = lines.map(line => {
@@ -250,7 +269,14 @@ function parseMarkdown(text: string): string {
       const content = trimmed.substring(2)
       if (!inList) {
         inList = true
-        return `<ul class="list-disc pl-4 space-y-1 my-1"><li>${content}</li>`
+        return `<ul class="list-disc pl-4 space-y-1 my-1 text-slate-100"><li>${content}</li>`
+      }
+      return `<li>${content}</li>`
+    } else if (/^\d+\.\s+/.test(trimmed)) {
+      const content = trimmed.replace(/^\d+\.\s+/, '')
+      if (!inList) {
+        inList = true
+        return `<ol class="list-decimal pl-4 space-y-1 my-1 text-slate-100"><li>${content}</li>`
       }
       return `<li>${content}</li>`
     } else {
@@ -261,11 +287,11 @@ function parseMarkdown(text: string): string {
       return line
     }
   })
-  
+
   if (inList) {
     processedLines.push('</ul>')
   }
-  
+
   html = processedLines.join('\n')
   html = html.replace(/\n/g, '<br>')
   return html
