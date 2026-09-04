@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/services/api'
+import router from '@/router'
 
 interface User {
   id: string
@@ -42,7 +43,12 @@ export const useAuthStore = defineStore('auth', () => {
       const { data } = await api.get('/auth/me')
       user.value = data
     } catch {
-      logout()
+      token.value = null
+      user.value = null
+      localStorage.removeItem('token')
+      if (router.currentRoute.value.meta.requiresAuth) {
+        router.push('/')
+      }
     }
   }
 
@@ -50,7 +56,9 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null
     user.value = null
     localStorage.removeItem('token')
-    window.location.href = '/'
+    if (router.currentRoute.value.path !== '/') {
+      router.push('/')
+    }
   }
 
   return { token, user, isAuthenticated, login, register, fetchUser, logout }
